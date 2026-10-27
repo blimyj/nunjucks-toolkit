@@ -1,0 +1,9 @@
+{
+  "client": {
+    "name": "Ada Lovelace"
+  },
+  "items": [
+    { "name": "Notebook", "price": 4.5 },
+    { "name": "Pen", "price": 1.25 }
+  ]
+}

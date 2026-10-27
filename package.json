@@ -1,0 +1,13 @@
+{
+  "name": "nunjucks-toolkit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Render Nunjucks templates to JSON, with counters and rotations saved between runs",
+  "scripts": {
+    "invoice": "node render.js invoice.njk",
+    "daily": "node render.js daily.njk"
+  },
+  "dependencies": {
+    "nunjucks": "^3.2.4"
+  }
+}

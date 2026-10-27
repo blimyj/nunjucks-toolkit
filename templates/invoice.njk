@@ -1,0 +1,6 @@
+{
+  "invoice": "INV-{{ counter("invoice") | pad(4) }}",
+  "bill_to": {{ client.name | dump }},
+  "items": {{ items | dump }},
+  "total": {{ items | sum("price") }}
+}

@@ -1,0 +1,7 @@
+{
+  "day": {{ counter("day") }},
+  "date": {{ now() | date("YYYY-MM-DD") | dump }},
+  "topic": {{ rotate("topic", topics) | dump }},
+  "tomorrow": {{ upcoming("topic", topics) | dump }},
+  "last_run": {{ lastRun | date("D MMM YYYY [at] HH:mm", "never") | dump }}
+}

@@ -1,0 +1,3479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nunjucks Workbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#F5F7F2; --surface:#FFFFFF; --sunk:#ECEFE8; --fg:#1B2119; --muted:#5B655C; --line:#D8DDD3;
+  --accent:#2C7A4B; --accent-soft:#DCEDDF; --select:rgba(44,122,75,.22); --on-accent:#FFFFFF;
+  --tag-out:#1D5EA8; --tag-block:#9A5A00; --tag-comment:#7B847A;
+  --err:#B23B3B; --err-soft:#F8E4E4;
+  --hl-kw:#8B2F8F; --hl-str:#2C7A4B; --hl-num:#B5451B; --hl-filter:#0E7C86; --hl-fn:#3D52B8;
+  --hl-tag:#A23B5C; --hl-attr:#9A5A00; --hl-key:#1D5EA8; --hl-punct:#6E786F;
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",sans-serif;
+  --font-body:"Source Sans 3","Helvetica Neue",Arial,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;
+  --radius:6px; --measure:68ch;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1411; --surface:#171D18; --sunk:#1C241E; --fg:#E6EAE3; --muted:#98A398; --line:#2A332C;
+    --accent:#6DC98C; --accent-soft:#1E3A2A; --select:rgba(109,201,140,.28); --on-accent:#0F1411;
+    --tag-out:#82B4F0; --tag-block:#E3A94F; --tag-comment:#7F8A80;
+    --err:#F08C8C; --err-soft:#3A1F1F; color-scheme:dark;
+    --hl-kw:#D69BE0; --hl-str:#7FD39A; --hl-num:#F2A07B; --hl-filter:#5FD0D8; --hl-fn:#9EAEF5;
+    --hl-tag:#F08DAA; --hl-attr:#E3A94F; --hl-key:#82B4F0; --hl-punct:#8A958B;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1411; --surface:#171D18; --sunk:#1C241E; --fg:#E6EAE3; --muted:#98A398; --line:#2A332C;
+  --accent:#6DC98C; --accent-soft:#1E3A2A; --select:rgba(109,201,140,.28); --on-accent:#0F1411;
+  --tag-out:#82B4F0; --tag-block:#E3A94F; --tag-comment:#7F8A80;
+  --err:#F08C8C; --err-soft:#3A1F1F; color-scheme:dark;
+  --hl-kw:#D69BE0; --hl-str:#7FD39A; --hl-num:#F2A07B; --hl-filter:#5FD0D8; --hl-fn:#9EAEF5;
+  --hl-tag:#F08DAA; --hl-attr:#E3A94F; --hl-key:#82B4F0; --hl-punct:#8A958B;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} *{transition:none !important} }
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:17px/1.55 var(--font-body); -webkit-font-smoothing:antialiased;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:0;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top, 0px); z-index:10; background:var(--bg)}
+a{color:var(--accent)}
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.shell{display:grid; grid-template-columns:minmax(0,1fr); gap:0 40px; max-width:1240px; margin:0 auto}
+@media (min-width: 900px){ .shell{grid-template-columns:240px minmax(0,1fr)} }
+
+/* Index */
+.side{position:sticky; top:env(safe-area-inset-top, 0px); z-index:5; background:var(--bg); align-self:start}
+@media (min-width: 900px){ .side{height:100vh; overflow:auto; padding-block:28px 40px; border-right:1px solid var(--line); padding-right:20px} }
+.brand{font:600 15px/1.2 var(--font-display); letter-spacing:-.01em; margin:0 0 18px}
+.brand small{display:block; font:500 11px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:4px}
+.progress{margin:0 0 18px}
+.progress-label{display:flex; justify-content:space-between; font:500 12px/1 var(--font-mono); color:var(--muted); margin-bottom:6px; font-variant-numeric:tabular-nums}
+.progress-bar{height:4px; background:var(--sunk); border-radius:2px; overflow:hidden}
+.progress-bar i{display:block; height:100%; width:0; background:var(--accent); transition:width .25s}
+.index{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px}
+.index a{display:flex; gap:10px; align-items:baseline; text-decoration:none; color:var(--muted); padding:6px 8px; border-radius:var(--radius); font-size:15px; line-height:1.3}
+.index a .n{font:500 11px/1.6 var(--font-mono); min-width:1.6em; color:var(--muted)}
+.index a:hover{background:var(--sunk); color:var(--fg)}
+.index a.is-active{background:var(--accent-soft); color:var(--fg)}
+.index a.is-done .n{color:var(--accent)}
+.index a.is-done .n::after{content:" ✓"}
+@media (max-width: 899px){
+  .side{padding-block:10px 8px; border-bottom:1px solid var(--line)}
+  .brand, .progress{display:none}
+  .index{flex-direction:row; overflow-x:auto; gap:4px; scrollbar-width:none; padding-bottom:2px}
+  .index::-webkit-scrollbar{display:none}
+  .index li{flex:0 0 auto}
+  .index a{white-space:nowrap; border:1px solid var(--line); padding:5px 10px; font-size:14px}
+  .index a.is-active{border-color:var(--accent)}
+}
+
+/* Main column */
+.main{min-width:0; padding-block:28px 96px}
+.hero{padding-block:16px 40px}
+.eyebrow{font:500 12px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 10px}
+h1{font:700 clamp(36px, 5vw, 52px)/1.02 var(--font-display); letter-spacing:-.02em; margin:0 0 18px; text-wrap:balance; max-width:20ch}
+h2{font:650 clamp(26px, 3.2vw, 32px)/1.1 var(--font-display); letter-spacing:-.015em; margin:0 0 14px; text-wrap:balance}
+h3{font:600 20px/1.25 var(--font-display); margin:32px 0 10px; text-wrap:balance}
+.lede{font-size:20px; line-height:1.5; max-width:var(--measure); margin:0 0 28px}
+.prose{max-width:var(--measure)}
+.prose p, .prose ul, .prose ol{margin:0 0 14px}
+.prose li{margin-bottom:6px}
+.prose li::marker{color:var(--muted)}
+code{font-family:var(--font-mono); font-size:.86em; background:var(--sunk); padding:.1em .35em; border-radius:4px}
+pre code{background:none; padding:0; font-size:inherit}
+
+.legend{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px; max-width:820px}
+.legend > div{display:flex; flex-direction:column; gap:6px; padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius)}
+.legend code{background:none; padding:0; font-size:18px; font-weight:500}
+.legend span{font-size:15px; color:var(--muted)}
+.t-out{color:var(--tag-out)} .t-block{color:var(--tag-block)} .t-com{color:var(--tag-comment); font-style:italic}
+
+.lesson{padding-block:44px 40px; border-top:1px solid var(--line); scroll-margin-top:72px}
+@media (min-width: 900px){ .lesson{scroll-margin-top:12px} }
+.lesson-head{display:flex; flex-wrap:wrap; gap:8px 20px; align-items:baseline; justify-content:space-between; margin-bottom:6px}
+.done{display:inline-flex; align-items:center; gap:8px; font-size:14px; color:var(--muted); cursor:pointer; user-select:none}
+.done input{accent-color:var(--accent); width:16px; height:16px; margin:0}
+
+.note{background:var(--sunk); padding:12px 16px; border-radius:var(--radius); margin:18px 0; max-width:var(--measure)}
+.note .eyebrow{margin-bottom:4px; color:var(--tag-block)}
+.note p:last-child{margin-bottom:0}
+
+/* Static code blocks */
+.code{position:relative; margin:14px 0; padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); font:13.5px/1.55 var(--font-mono); overflow-x:auto; tab-size:2}
+.code code{white-space:pre}
+.code .copy{position:absolute; top:8px; right:8px}
+/* Syntax highlighting */
+.h-d-out{color:var(--tag-out); font-weight:500} .h-d-block{color:var(--tag-block); font-weight:500}
+.h-com{color:var(--tag-comment); font-style:italic}
+.h-kw{color:var(--hl-kw)} .h-str{color:var(--hl-str)} .h-num{color:var(--hl-num)}
+.h-filter{color:var(--hl-filter)} .h-fn{color:var(--hl-fn)} .h-var{color:var(--fg)}
+.h-op{color:var(--hl-kw)} .h-punct{color:var(--hl-punct)}
+.h-tag{color:var(--hl-tag)} .h-attr{color:var(--hl-attr)} .h-key{color:var(--hl-key)}
+/* Keep glyph widths identical in the overlay editors so the caret lines up */
+.editor pre *{font-style:normal !important; font-weight:inherit !important}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto; margin:14px 0 20px}
+table{border-collapse:collapse; width:100%; font-size:15px; min-width:520px}
+th, td{text-align:left; vertical-align:top; padding:8px 12px 8px 0; border-bottom:1px solid var(--line)}
+th{font:600 12px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+tr.grp th{font:600 14px/1.4 var(--font-display); letter-spacing:0; text-transform:none; color:var(--fg); padding-top:18px}
+td code{white-space:nowrap}
+
+/* Playground */
+.pg{display:grid; gap:14px; margin:22px 0 8px; min-width:0}
+@media (min-width: 760px){ .pg{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)} }
+.pane{min-width:0; display:flex; flex-direction:column; gap:8px}
+.pane-head{display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:28px; flex-wrap:wrap}
+.pane-title{font:500 12px/1 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.tabs{display:flex; gap:4px; flex-wrap:wrap}
+.tab{font:13px/1 var(--font-mono); padding:6px 9px; border:1px solid transparent; background:transparent; color:var(--muted); cursor:pointer; border-radius:var(--radius)}
+.tab:hover{color:var(--fg)}
+.tab.is-active{background:var(--surface); border-color:var(--line); color:var(--fg)}
+.editor{position:relative; background:var(--sunk); border:1px solid var(--line); border-radius:var(--radius); min-width:0}
+.editor:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+.editor pre, .editor textarea{margin:0; padding:12px 14px; font:13.5px/1.55 var(--font-mono); white-space:pre-wrap; overflow-wrap:break-word; word-break:normal; tab-size:2; letter-spacing:0; width:100%; display:block}
+.editor pre{color:var(--fg); min-height:3.3em; pointer-events:none}
+.editor textarea{position:absolute; inset:0; height:100%; background:transparent; color:transparent; -webkit-text-fill-color:transparent; caret-color:var(--fg); border:0; resize:none; outline:none; overflow:hidden}
+.editor textarea::selection{background:var(--select)} /* see-through: the coloured code sits under the textarea */
+.editor.is-json pre{color:var(--fg)}
+.ctx-err{font:13px/1.4 var(--font-mono); color:var(--err); margin:0}
+.out{margin:0; padding:12px 14px; font:13.5px/1.55 var(--font-mono); white-space:pre-wrap; overflow-wrap:break-word; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); min-height:7em; flex:1}
+.out.err{color:var(--err); background:var(--err-soft); border-color:transparent}
+.preview{padding:12px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); min-height:7em; flex:1; overflow-x:auto}
+.ws{color:var(--tag-comment); opacity:.75}
+.btn{font:600 13px/1 var(--font-body); padding:7px 11px; border:1px solid var(--line); background:var(--surface); color:var(--fg); border-radius:var(--radius); cursor:pointer}
+.btn:hover{border-color:var(--muted)}
+.btn.sm{padding:5px 9px; font-size:12px}
+.check{display:inline-flex; align-items:center; gap:6px; font:13px/1 var(--font-body); color:var(--muted); cursor:pointer}
+.check input{accent-color:var(--accent); margin:0}
+.challenge{border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin:18px 0 10px; display:flex; gap:12px 18px; align-items:flex-start; flex-wrap:wrap; background:var(--surface)}
+.challenge .goal{flex:1 1 320px; min-width:0}
+.challenge .goal .eyebrow{margin-bottom:4px}
+.challenge .goal p{margin:0; font-size:15px}
+.challenge .status{display:flex; flex-direction:column; align-items:flex-end; gap:8px}
+.pill{font:600 12px/1 var(--font-mono); padding:5px 9px; border-radius:999px; background:var(--sunk); color:var(--muted); white-space:nowrap}
+.pill.ok{background:var(--accent); color:var(--on-accent)}
+.unavailable{padding:14px; border:1px dashed var(--line); border-radius:var(--radius); color:var(--muted); font-size:15px}
+
+/* Toolkit sections */
+.nav-group{font:600 11px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); padding:14px 8px 4px}
+.nav-group:first-child{padding-top:0}
+.index li.sub a{padding-left:34px; font-size:14px}
+@media (max-width: 899px){ .nav-group, .index li.sub{display:none} }
+.flow{display:grid; gap:12px; align-items:center; margin:22px 0 8px; grid-template-columns:minmax(0,1fr)}
+@media (min-width: 760px){ .flow{grid-template-columns:minmax(0,1.3fr) auto minmax(0,1fr) auto minmax(0,.8fr)} }
+.flow-in, .flow-mid, .flow-out{display:flex; flex-direction:column; gap:10px; min-width:0}
+.flow-arrow{font:600 22px/1 var(--font-display); color:var(--muted); text-align:center}
+@media (max-width: 759px){ .flow-arrow{transform:rotate(90deg)} }
+.file-card{display:flex; flex-direction:column; gap:4px; padding:10px 12px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); min-width:0}
+.file-card.engine{border-color:var(--accent); background:var(--accent-soft)}
+.file-name{font:500 13px/1.3 var(--font-mono); overflow-wrap:anywhere}
+.file-role{font-size:14px; line-height:1.45; color:var(--muted)}
+.file-role strong{color:var(--fg); font-weight:600}
+.glossary{display:grid; grid-template-columns:minmax(0,1fr); gap:4px 20px; max-width:var(--measure); margin:0}
+@media (min-width: 600px){ .glossary{grid-template-columns:170px minmax(0,1fr)} }
+.glossary dt{font-weight:600; padding-top:8px}
+.glossary dd{margin:0; padding-top:8px; border-top:1px solid var(--line)}
+@media (min-width: 600px){ .glossary dt{border-top:1px solid var(--line)} }
+.steps{margin:0; padding-left:1.4em; display:flex; flex-direction:column; gap:14px; max-width:820px}
+.steps li::marker{font:600 15px var(--font-display); color:var(--accent)}
+.steps p{margin:0 0 6px}
+.helper{border-top:1px solid var(--line); padding-top:22px; margin-top:28px}
+.helper h3{margin-top:0}
+.sig code{font-size:.9em; background:none; padding:0; color:var(--hl-fn)}
+.what{max-width:var(--measure); margin:0 0 10px; font-size:17px}
+.args{display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 14px; margin:0 0 12px; max-width:var(--measure); font-size:15px}
+.args dt code{background:none; padding:0; font-weight:500}
+.args dd{margin:0; color:var(--muted)}
+.ex{display:flex; flex-direction:column; gap:12px; margin:14px 0 6px; min-width:0}
+.ex-files{min-width:0; display:flex; flex-direction:column; gap:8px}
+.ex-start{margin:0; font-size:13px; color:var(--muted)}
+.ex-cards{display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr))}
+.ex-runs:not(.many) .ex-cards{grid-template-columns:minmax(0,1fr)}
+.run{display:flex; flex-direction:column; gap:6px; min-width:0}
+.run .out{min-height:3.5em}
+.run-flags{text-transform:none; letter-spacing:0}
+.run-state{margin:0; font-size:12.5px; color:var(--muted); overflow-wrap:anywhere}
+.run-state code, .ex-start code{font-size:12px}
+table.glance td:first-child{white-space:nowrap}
+table.glance td:first-child a{text-decoration:none}
+
+/* Workspace */
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+.wsp{container-type:inline-size; display:flex; flex-direction:column; gap:10px; margin:22px 0 8px; min-width:0}
+.wsp-bar{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.wsp-new{display:inline-flex; gap:6px; align-items:center; flex:1 1 260px; min-width:0}
+.wsp-input{flex:1; min-width:0; font:13px/1.2 var(--font-mono); padding:6px 9px; border:1px solid var(--line); border-radius:var(--radius); background:var(--surface); color:var(--fg)}
+.btn.danger{border-color:var(--err); color:var(--err)}
+.wsp-status{margin:0; min-height:1.4em; font:13px/1.4 var(--font-body); color:var(--muted)}
+.wsp-status.err{color:var(--err)}
+.wsp-main{display:grid; gap:14px; grid-template-columns:minmax(0,1fr)}
+@container (min-width: 560px){ .wsp-main{grid-template-columns:180px minmax(0,1fr)} .wsp-output{grid-column:1 / -1} .wsp-tree{padding-top:36px} }
+@container (min-width: 900px){ .wsp-main{grid-template-columns:190px minmax(0,1.1fr) minmax(0,.9fr)} .wsp-output{grid-column:auto} }
+.wsp-tree{display:flex; flex-direction:column; gap:2px; min-width:0}
+.wsp-file, .wsp-init{display:block; width:100%; text-align:left; font:13px/1.35 var(--font-mono); padding:5px 8px; border:1px solid transparent; border-radius:var(--radius); background:transparent; color:var(--fg); cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.wsp-file:hover{background:var(--sunk)}
+.wsp-file.child{padding-left:22px; color:var(--muted)}
+.wsp-file.is-active{background:var(--accent-soft); color:var(--fg)}
+.wsp-init{padding-left:22px; color:var(--accent); font-size:12px}
+.wsp-init:hover{text-decoration:underline}
+.wsp-group{margin:10px 0 2px; font:500 11px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.wsp-empty{margin:0; font-size:14px; color:var(--muted)}
+.wsp-note{margin:0; font-size:13px; color:var(--muted)}
+.wsp-edit textarea:disabled{cursor:not-allowed}
+.out.muted{color:var(--muted)}
+
+.cheat{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:14px}
+.cheat > div{min-width:0}
+.cheat h3{margin-top:0}
+.cheat .code{margin-top:8px}
+footer.end{margin-top:40px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); font-size:15px; max-width:var(--measure)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+<aside class="side" aria-label="Lessons">
+  <p class="brand">Nunjucks Workbook<small>render.js toolkit</small></p>
+  <div class="progress">
+    <div class="progress-label"><span>Basics done</span><span id="progress-count">0 / 10</span></div>
+    <div class="progress-bar"><i id="progress-fill"></i></div>
+  </div>
+  <ol class="index" id="index">
+    <li class="nav-group">Toolkit</li>
+    <li><a href="#how"><span class="n">1</span>How it works</a></li>
+    <li><a href="#start"><span class="n">2</span>Quick start</a></li>
+    <li><a href="#helpers"><span class="n">3</span>Helpers at a glance</a></li>
+    <li class="sub"><a href="#h-runs">Remember between runs</a></li>
+    <li class="sub"><a href="#h-dates">Dates</a></li>
+    <li class="sub"><a href="#h-sets">Lists and Sets</a></li>
+    <li class="sub"><a href="#h-json">Writing JSON</a></li>
+    <li><a href="#recipes"><span class="n">4</span>Recipes</a></li>
+    <li><a href="#workspace"><span class="n">5</span>Workspace</a></li>
+    <li><a href="#files"><span class="n">6</span>render.js, helpers.js and send.js</a></li>
+    <li class="nav-group">Language basics</li>
+    <li><a href="#setup" data-lesson="setup"><span class="n">B1</span>Setup</a></li>
+    <li><a href="#syntax" data-lesson="syntax"><span class="n">B2</span>Delimiters and variables</a></li>
+    <li><a href="#filters" data-lesson="filters"><span class="n">B3</span>Filters</a></li>
+    <li><a href="#logic" data-lesson="logic"><span class="n">B4</span>Conditions and tests</a></li>
+    <li><a href="#loops" data-lesson="loops"><span class="n">B5</span>Loops</a></li>
+    <li><a href="#variables" data-lesson="variables"><span class="n">B6</span>Variables and whitespace</a></li>
+    <li><a href="#inheritance" data-lesson="inheritance"><span class="n">B7</span>Template inheritance</a></li>
+    <li><a href="#macros" data-lesson="macros"><span class="n">B8</span>Includes and macros</a></li>
+    <li><a href="#escaping" data-lesson="escaping"><span class="n">B9</span>Escaping and safety</a></li>
+    <li><a href="#node" data-lesson="node"><span class="n">B10</span>Node, Express, custom filters</a></li>
+    <li><a href="#cheatsheet"><span class="n">※</span>Cheat sheet</a></li>
+  </ol>
+</aside>
+
+<main class="main">
+<header class="hero">
+  <p class="eyebrow">Nunjucks 3.2 · render.js toolkit</p>
+  <h1>Fill templates with data, and remember things between runs</h1>
+  <p class="lede">This page explains a small toolkit built on Nunjucks, Mozilla's templating language. You write a template, keep its values in a JSON file, and <code>render.js</code> turns the two into a finished letter, invoice or JSON file. Helper functions add numbering, rotating lists, dates and JSON building. Start with <a href="#how">how it works</a>, or jump to the <a href="#helpers">helper reference</a>.</p>
+  <div class="legend" aria-label="The three kinds of Nunjucks tag">
+    <div><code class="t-out">{{ expression }}</code><span>Prints a value. Variables, math, filters, function calls.</span></div>
+    <div><code class="t-block">{% tag %}</code><span>Runs logic: if, for, set, macro, include.</span></div>
+    <div><code class="t-com">{# comment #}</code><span>A comment. It never reaches the output.</span></div>
+  </div>
+</header>
+
+<!-- HOW IT WORKS -->
+<section class="lesson" id="how">
+  <p class="eyebrow">Overview</p>
+  <h2>How it works</h2>
+  <div class="prose">
+    <p>You write a template. A small script, <code>render.js</code>, fills it in with your values and prints the result: a letter, an invoice, a JSON file, anything made of text. Each template has two JSON files next to it, and the script also loads extra functions from <code>helpers.js</code>.</p>
+  </div>
+  <div class="flow" aria-label="How render.js uses the files">
+    <div class="flow-in">
+      <div class="file-card"><span class="file-name">invoice.data.json</span><span class="file-role">Your values: names, prices, lists. <strong>You edit it.</strong></span></div>
+      <div class="file-card"><span class="file-name">invoice.state.json</span><span class="file-role">What earlier runs remembered: counters, positions, the last run time. <strong>The script edits it.</strong></span></div>
+      <div class="file-card"><span class="file-name">invoice.njk</span><span class="file-role">The template: your text with <code>{{ }}</code> where values go. <strong>You edit it.</strong></span></div>
+    </div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-mid"><div class="file-card engine"><span class="file-name">node render.js invoice.njk</span><span class="file-role">Reads all three, runs the template with the helper functions, prints the result, then saves the state file.</span></div></div>
+    <div class="flow-arrow" aria-hidden="true">→</div>
+    <div class="flow-out"><div class="file-card"><span class="file-name">Output</span><span class="file-role">Printed to the screen, or saved to a file you name.</span></div></div>
+  </div>
+  <h3>Words used on this page</h3>
+  <dl class="glossary">
+    <dt>Template</dt><dd>A <code>.njk</code> file in the <code>templates</code> folder. Plain text plus Nunjucks tags.</dd>
+    <dt>Data file</dt><dd><code>name.data.json</code>. The values the template prints. Its top-level keys become variables: <code>"client"</code> becomes <code>{{ client }}</code>.</dd>
+    <dt>State file</dt><dd><code>name.state.json</code>. Values carried from one run to the next. You rarely open it.</dd>
+    <dt>Run</dt><dd>One <code>node render.js invoice.njk</code>. Values that change between runs, like counters, change once per run.</dd>
+    <dt>Helper</dt><dd>An extra function or filter this toolkit adds to Nunjucks, such as <code>counter()</code> or <code>| date</code>. Every helper is listed in the <a href="#helpers">reference</a>.</dd>
+    <dt>Function or filter</dt><dd>A function is called with brackets: <code>counter("invoice")</code>. A filter goes after a value and a pipe: <code>price | pad(4)</code>.</dd>
+    <dt>Shared file</dt><dd>Another template or <code>.json</code> file whose JSON you pull into this one with <code>jsonFromFile()</code>. It uses the calling template's data, so it needs no data file of its own.</dd>
+  </dl>
+</section>
+
+<!-- QUICK START -->
+<section class="lesson" id="start">
+  <p class="eyebrow">Quick start</p>
+  <h2>From an empty folder to your second run</h2>
+  <ol class="steps">
+    <li>
+      <p><strong>Set up the folder.</strong> Install Nunjucks, then save <a href="#files">render.js and helpers.js</a> from the bottom of this page into the folder.</p>
+      <pre class="code" data-lang="sh"><code>mkdir my-project &amp;&amp; cd my-project
+npm install nunjucks
+mkdir templates</code></pre>
+    </li>
+    <li>
+      <p><strong>Write a template.</strong> Save it as <code>templates/invoice.njk</code>. <code>| dump</code> writes a value as JSON: text gets its quotes, lists stay lists.</p>
+      <pre class="code" data-lang="njk"><code>{
+  "invoice": "INV-{{ counter("invoice") | pad(4) }}",
+  "bill_to": {{ client.name | dump }},
+  "items": {{ items | dump }},
+  "total": {{ items | sum("price") }}
+}</code></pre>
+    </li>
+    <li>
+      <p><strong>Create its data and state files.</strong> <code>init</code> reads the template and writes a data file with every value it uses, left blank for you.</p>
+      <pre class="code" data-lang="sh"><code>node render.js init invoice.njk</code></pre>
+      <pre class="code" data-lang="json"><code>{
+  "client": { "name": "" },
+  "items": []
+}</code></pre>
+    </li>
+    <li>
+      <p><strong>Fill in the data file,</strong> <code>templates/invoice.data.json</code>.</p>
+      <pre class="code" data-lang="json"><code>{
+  "client": { "name": "Ada Lovelace" },
+  "items": [ { "name": "Notebook", "price": 4.5 }, { "name": "Pen", "price": 1.25 } ]
+}</code></pre>
+    </li>
+    <li>
+      <p><strong>Run it.</strong> The first run prints this:</p>
+      <pre class="code" data-lang="sh"><code>node render.js invoice.njk</code></pre>
+      <pre class="code" data-lang="json"><code>{
+  "invoice": "INV-0001",
+  "bill_to": "Ada Lovelace",
+  "items": [{"name":"Notebook","price":4.5},{"name":"Pen","price":1.25}],
+  "total": 5.75
+}</code></pre>
+      <p>Run it again and the invoice becomes <code>"INV-0002"</code>, because <code>counter()</code> saved the number in <code>invoice.state.json</code>. Add a file name to save the output instead of printing it.</p>
+      <pre class="code" data-lang="sh"><code>node render.js invoice.njk out/invoice.json</code></pre>
+    </li>
+  </ol>
+  <div class="prose"><p>To try all of this without installing anything, use the <a href="#workspace">workspace</a>. It runs the same <code>render.js</code> in your browser.</p></div>
+</section>
+
+<!-- HELPER REFERENCE -->
+<section class="lesson" id="helpers">
+  <p class="eyebrow">Helper reference</p>
+  <h2>Every helper at a glance</h2>
+  <div class="prose"><p>Every example below is live. Edit the template or the data and the output updates. Helpers that remember things are run several times in a row, so you can see what changes from one run to the next.</p></div>
+  <div class="tbl-wrap"><table class="glance">
+    <thead><tr><th>Helper</th><th>What it gives you</th></tr></thead>
+    <tbody>
+      <tr class="grp"><th colspan="2">Remember between runs</th></tr>
+      <tr><td><a href="#h-counter"><code>counter("key")</code></a></td><td>A number that goes up each run: 1, 2, 3.</td></tr>
+      <tr><td><a href="#h-rotate"><code>rotate("key", list)</code></a></td><td>The next item of a list each run, starting over at the end.</td></tr>
+      <tr><td><a href="#h-rotate"><code>upcoming("key", list)</code></a></td><td>The item the next run will get.</td></tr>
+      <tr><td><a href="#h-firsttime"><code>firstTime("key", value)</code></a></td><td>True the first run that sees this value, false afterwards.</td></tr>
+      <tr><td><a href="#h-previous"><code>previous("key")</code>, <code>lastRun</code></a></td><td>What a value was on the run before; when the template last ran.</td></tr>
+      <tr><td><a href="#h-reset"><code>reset("key")</code></a></td><td>Start a counter or rotation over on the next run.</td></tr>
+      <tr><td><a href="#h-remember"><code>remember("key", value)</code></a></td><td>Save any value for the next run.</td></tr>
+      <tr><td><a href="#h-hold"><code>--hold</code>, <code>--only</code>, <code>--reverse</code>, <code>--dry-run</code></a></td><td>Choose which keys move on, repeat or step back this run.</td></tr>
+      <tr class="grp"><th colspan="2">Dates</th></tr>
+      <tr><td><a href="#h-dates"><code>now()</code>, <code>datetime("2027-01-01")</code></a></td><td>The current moment; a date you write in the template.</td></tr>
+      <tr><td><a href="#h-dates"><code>| date("D MMM YYYY")</code></a></td><td>A date written the way you want.</td></tr>
+      <tr><td><a href="#h-dates"><code>| dateAdd(30, "days")</code>, <code>daysBetween(a, b)</code></a></td><td>Date arithmetic.</td></tr>
+      <tr class="grp"><th colspan="2">Lists and Sets</th></tr>
+      <tr><td><a href="#h-sets"><code>toSet(list)</code>, <code>| array</code>, <code>| unique</code></a></td><td>Remove duplicates; make a Set work with sort and join.</td></tr>
+      <tr class="grp"><th colspan="2">Writing JSON</th></tr>
+      <tr><td><a href="#h-byhand"><code>{{ value | dump }}</code></a></td><td>Any value written as JSON: text with quotes, numbers, lists, objects. Built into Nunjucks.</td></tr>
+      <tr><td><a href="#h-byhand"><code>{%- if x %}, "key": ...{%- endif %}</code></a></td><td>A key that appears only when <code>x</code> is true.</td></tr>
+      <tr><td><a href="#h-jsonfromfile"><code>jsonFromFile("file", "path")</code></a></td><td>The JSON another file produces, or one value inside it.</td></tr>
+      <tr><td><a href="#h-shortcut"><code>json({ ... })</code>, <code>when()</code></a></td><td>Optional shortcut: write the whole output as one object.</td></tr>
+      <tr class="grp"><th colspan="2">Formatting</th></tr>
+      <tr><td><a href="#h-counter"><code>| pad(4)</code></a></td><td>Zeros in front: 42 becomes 0042.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p>Nunjucks' own features work alongside these: <code>{% if %}</code>, <code>{% for %}</code>, macros and its built-in filters. They are covered in the <a href="#basics">language basics</a>.</p></div>
+</section>
+
+<section class="lesson" id="h-runs">
+  <p class="eyebrow">Helper reference</p>
+  <h2>Remember between runs</h2>
+  <div class="prose"><p>These helpers keep their values in the template's state file. Each one gives <strong>one value per run</strong>: use it as often as you like inside a template and it prints the same thing everywhere. The next run gets the next value. Every helper takes a <code>key</code>, the name the value is saved under, so different counters and lists never mix.</p></div>
+
+  <article class="helper" id="h-counter">
+    <h3 class="sig"><code>counter(key, step)</code></h3>
+    <p class="what">A number that goes up each run.</p>
+    <dl class="args">
+      <dt><code>key</code></dt><dd>The name it is saved under, such as <code>"invoice"</code>.</dd>
+      <dt><code>step</code></dt><dd>Optional. How much to add each run. Default 1.</dd>
+    </dl>
+    <div class="prose"><p>The state file starts at 41, so the first run gives 42. <code>| pad(4)</code> adds zeros in front.</p></div>
+    <div class="ex" data-ex="counter"></div>
+  </article>
+
+  <article class="helper" id="h-rotate">
+    <h3 class="sig"><code>rotate(key, list)</code> and <code>upcoming(key, list)</code></h3>
+    <p class="what"><code>rotate</code> gives the next item of a list each run, and starts over after the last one. <code>upcoming</code> tells you which item the next run will get.</p>
+    <dl class="args">
+      <dt><code>key</code></dt><dd>The name the position is saved under.</dd>
+      <dt><code>list</code></dt><dd>An array or a Set. A Set drops duplicates first.</dd>
+      <dt><code>false</code></dt><dd>Optional third argument to <code>rotate</code>. Stop with an error when every item has been used, instead of starting over.</dd>
+    </dl>
+    <div class="ex" data-ex="rotate"></div>
+  </article>
+
+  <article class="helper" id="h-firsttime">
+    <h3 class="sig"><code>firstTime(key, value)</code></h3>
+    <p class="what">True on the first run that sees this value, false on every run after. Use it as a value, in a one-line <code>if</code>, or in <code>{% if %}</code>.</p>
+    <dl class="args">
+      <dt><code>key</code></dt><dd>The name of the list of seen values.</dd>
+      <dt><code>value</code></dt><dd>What to check, such as a client ID or a name.</dd>
+    </dl>
+    <div class="ex" data-ex="firstTime"></div>
+  </article>
+
+  <article class="helper" id="h-previous">
+    <h3 class="sig"><code>previous(key, fallback)</code> and <code>lastRun</code></h3>
+    <p class="what"><code>previous</code> gives a saved value as it was before this run. <code>lastRun</code> is a variable every template gets: the time of its last successful run, or blank on the first run.</p>
+    <dl class="args">
+      <dt><code>key</code></dt><dd>The saved value to read, such as a counter's key.</dd>
+      <dt><code>fallback</code></dt><dd>Optional. What to give when nothing has been saved yet.</dd>
+    </dl>
+    <div class="ex" data-ex="previous"></div>
+  </article>
+
+  <article class="helper" id="h-reset">
+    <h3 class="sig"><code>reset(key, value)</code></h3>
+    <p class="what">Sets a saved value for the <em>next</em> run. Use it to start a counter or rotation over. It prints nothing.</p>
+    <dl class="args">
+      <dt><code>key</code></dt><dd>The value to change.</dd>
+      <dt><code>value</code></dt><dd>Optional. What to set it to. Default 0, which makes a counter start at 1 again and a rotation start at the first item.</dd>
+    </dl>
+    <div class="ex" data-ex="reset"></div>
+  </article>
+
+  <article class="helper" id="h-remember">
+    <h3 class="sig"><code>remember(key, value)</code></h3>
+    <p class="what">Saves any value for the next run, where <code>previous(key)</code> reads it back. It prints nothing.</p>
+    <dl class="args">
+      <dt><code>key</code></dt><dd>The name to save it under.</dd>
+      <dt><code>value</code></dt><dd>Text, a number, a date, a list or a Set. Dates are saved as text and Sets as lists.</dd>
+    </dl>
+    <div class="ex" data-ex="remember"></div>
+  </article>
+
+  <article class="helper" id="h-hold">
+    <h3 class="sig"><code>--hold</code>, <code>--only</code>, <code>--reverse</code>, <code>--dry-run</code></h3>
+    <p class="what">Command-line flags that choose which keys move on this run. A held key gives last run's value again and is not saved, so the next normal run carries on from where it was. A reversed key steps back one run.</p>
+    <dl class="args">
+      <dt><code>--hold keys</code></dt><dd>These keys repeat last run's value; everything else moves on.</dd>
+      <dt><code>--only keys</code></dt><dd>Only these keys move on; everything else repeats.</dd>
+      <dt><code>--reverse keys</code></dt><dd>These keys step back one run. A counter counts down by its step; <code>rotate()</code> gives the item before last run's, and before the first item comes the last; <code>firstTime()</code> forgets the value, so the next run sees it as new.</dd>
+      <dt><code>--dry-run</code></dt><dd>Shows what the next run would print. Nothing is saved, not even an output file.</dd>
+    </dl>
+    <div class="prose">
+      <p>A key is the name you gave <code>counter()</code>, <code>rotate()</code>, <code>firstTime()</code>, <code>reset()</code> or <code>remember()</code>. Separate several with commas. <code>--hold lastRun</code> keeps the last run time as well. <code>reset()</code> and <code>remember()</code> do nothing when their key is held or reversed, and a key cannot be both held and reversed.</p>
+    </div>
+    <pre class="code" data-lang="sh"><code>node render.js daily.njk --hold topic        # same topic as last time; day still counts up
+node render.js daily.njk --only day          # only day moves on
+node render.js daily.njk --hold topic,day    # hold several keys
+node render.js daily.njk --reverse topic     # back to the previous topic
+node render.js daily.njk --dry-run           # preview the next run</code></pre>
+    <div class="prose">
+      <p>With any of these flags, <code>render.js</code> also prints what happened to each key, such as <code>day: 3 -&gt; 4</code> and <code>topic: held at 3</code>. A key that no helper uses is reported, which catches typos. From your own code, pass the same choices as the third argument: <code>render("daily.njk", {}, { hold: ["topic"] })</code> or <code>{ reverse: ["topic"] }</code>.</p>
+    </div>
+    <div class="ex" data-ex="hold"></div>
+  </article>
+</section>
+
+<section class="lesson" id="h-dates">
+  <p class="eyebrow">Helper reference</p>
+  <h2>Dates</h2>
+  <div class="prose">
+    <ul>
+      <li><strong><code>now()</code></strong> is the current date and time.</li>
+      <li><strong><code>datetime("2027-01-01")</code></strong> makes a date from text. Use it for dates written in the template, or to compare dates.</li>
+      <li><strong><code>value | date(format, fallback)</code></strong> writes a date using the letters in the table below. The value can be a date or text like <code>"2026-12-25"</code>. The fallback is printed when the value is blank.</li>
+      <li><strong><code>value | dateAdd(amount, unit)</code></strong> adds minutes, hours, days, weeks, months or years. A negative amount subtracts.</li>
+      <li><strong><code>daysBetween(a, b)</code></strong> counts calendar days from <code>a</code> to <code>b</code>.</li>
+    </ul>
+  </div>
+  <div class="ex" data-ex="dates"></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Letters</th><th>Gives</th><th>Letters</th><th>Gives</th></tr></thead>
+    <tbody>
+      <tr><td><code>YYYY</code> / <code>YY</code></td><td>2026 / 26</td><td><code>HH</code> / <code>H</code></td><td>18 / 18, 24-hour clock</td></tr>
+      <tr><td><code>MMMM</code> / <code>MMM</code></td><td>December / Dec</td><td><code>hh</code> / <code>h</code></td><td>06 / 6, 12-hour clock</td></tr>
+      <tr><td><code>MM</code> / <code>M</code></td><td>12 / 12</td><td><code>A</code></td><td>AM or PM</td></tr>
+      <tr><td><code>DD</code> / <code>D</code></td><td>05 / 5</td><td><code>mm</code></td><td>minutes</td></tr>
+      <tr><td><code>dddd</code> / <code>ddd</code></td><td>Friday / Fri</td><td><code>ss</code></td><td>seconds</td></tr>
+      <tr><td><code>[at]</code></td><td>Text in brackets is printed as it is</td><td>no format</td><td>2026-12-25</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose"><p>Dates use the computer's time zone. <code>"2026-12-25"</code> means midnight local time, so you always get the day you wrote.</p></div>
+</section>
+
+<section class="lesson" id="h-sets">
+  <p class="eyebrow">Helper reference</p>
+  <h2>Lists and Sets</h2>
+  <div class="prose">
+    <ul>
+      <li><strong><code>toSet(list)</code></strong> makes a Set from a list, which removes duplicates. A Set has <code>.size</code> and <code>.has(value)</code>, and works in <code>{% for %}</code>.</li>
+      <li><strong><code>set | array</code></strong> turns a Set back into a list. Nunjucks' <code>sort</code>, <code>join</code> and <code>first</code> filters need a list: on a Set, <code>sort</code> silently gives nothing.</li>
+      <li><strong><code>list | unique</code></strong> removes duplicates from a list in one step.</li>
+    </ul>
+  </div>
+  <div class="ex" data-ex="sets"></div>
+</section>
+
+<section class="lesson" id="h-json">
+  <p class="eyebrow">Helper reference</p>
+  <h2>Writing JSON</h2>
+  <article class="helper" id="h-byhand">
+    <h3>JSON by hand</h3>
+    <p class="what">Write the JSON as text, with <code>{{ }}</code> where values go. Four rules keep it valid:</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Value</th><th>Write it as</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Text</td><td><code>{{ name | dump }}</code></td><td><code>dump</code> adds the quotes and escapes any quotes inside. Do not add quotes of your own.</td></tr>
+        <tr><td>A list or object</td><td><code>{{ items | dump }}</code></td><td>Printed on its own, a list comes out as <code>a,b,c</code>. <code>dump</code> writes real JSON.</td></tr>
+        <tr><td>A number or true/false</td><td><code>{{ total }}</code></td><td>Prints as it is.</td></tr>
+        <tr><td>A Set</td><td><code>{{ tags | array | dump }}</code></td><td><code>dump</code> cannot read a Set, so turn it into a list first.</td></tr>
+      </tbody>
+    </table></div>
+    <div class="prose">
+      <p><strong>Optional keys</strong> go inside <code>{% if %}</code>, with the comma at the start: <code>{%- if rush %},</code>. The comma then appears only when the key does. The dashes stop skipped keys leaving blank lines. This needs one key above that is always there, like <code>"order"</code> below.</p>
+      <p>The customer's name contains quotes; <code>dump</code> escapes them. Set <code>rush</code> to true or remove the email in the data to see keys come and go.</p>
+    </div>
+    <div class="ex" data-ex="byHand"></div>
+  </article>
+
+  <article class="helper" id="h-jsonfromfile">
+    <h3 class="sig"><code>jsonFromFile(file, path, values)</code></h3>
+    <p class="what">Reads the JSON that another file produces and gives it to you as data. The file can be a <code>.json</code> file or a template that outputs JSON. A template run this way sees the same data as the template calling it. Print what you get with <code>| dump</code>.</p>
+    <dl class="args">
+      <dt><code>file</code></dt><dd>A file in the <code>templates</code> folder, such as <code>"address.njk"</code> or <code>"boxes.json"</code>.</dd>
+      <dt><code>path</code></dt><dd>Optional. One value inside that JSON: names joined with dots, and <code>[0]</code> for the first item of a list. <code>"street.number"</code>, <code>"[1].size"</code>. A wrong path gives an error that lists what is there.</dd>
+      <dt><code>values</code></dt><dd>Optional. Extra values for the other file, as an object: <code>{ "item": item }</code>. Needed inside a <code>{% for %}</code> loop: the loop's variable, <code>item</code> here, is not passed on by itself.</dd>
+    </dl>
+    <div class="prose"><p>Open the other files with the tabs. <code>address.njk</code> is a template that outputs JSON; <code>boxes.json</code> is a plain JSON list.</p></div>
+    <div class="ex" data-ex="jsonFromFile"></div>
+  </article>
+
+  <article class="helper" id="h-shortcut">
+    <h3 class="sig">Optional shortcut: <code>json(value)</code> and <code>when(condition, value, otherwise)</code></h3>
+    <p class="what">Instead of writing the JSON as text, write it as one object and <code>json()</code> prints it with every comma and quote in place. A key whose <code>when()</code> is false is left out. The rest of this page writes JSON by hand; use whichever you find easier to read.</p>
+    <dl class="args">
+      <dt><code>json(v, 2)</code></dt><dd>The value as JSON, indented by 2. Use 0 for one line. <code>value | json</code> works too.</dd>
+      <dt><code>when(c, v)</code></dt><dd><code>v</code> when <code>c</code> is true; otherwise the key or list item is left out. Only works inside <code>json()</code>.</dd>
+      <dt><code>when(c, v, o)</code></dt><dd><code>v</code> when <code>c</code> is true; otherwise <code>o</code>.</dd>
+    </dl>
+    <div class="ex" data-ex="shortcut"></div>
+  </article>
+</section>
+
+<!-- RECIPES -->
+<section class="lesson" id="recipes">
+  <p class="eyebrow">Recipes</p>
+  <h2>Common tasks</h2>
+
+  <article class="helper" id="r-sections">
+    <h3>Show one section or another</h3>
+    <p class="what">A <strong>macro</strong> is a section with a name, defined at the top of the template. It can use all of the template's data. Pick one with Nunjucks' one-line <code>if</code>: <code>{{ clientSection() if a + b == 2 else addressSection() }}</code>. Change <code>a</code> or <code>b</code> in the data.</p>
+    <div class="ex" data-ex="sections"></div>
+  </article>
+
+  <article class="helper" id="r-optional-json">
+    <h3>Optional sections in JSON</h3>
+    <p class="what">Each optional section sits inside <code>{%- if %},</code> … <code>{%- endif %}</code>, with its comma first. Turn <code>showClient</code> and <code>showAddress</code> on and off in the data.</p>
+    <div class="ex" data-ex="optionalJson"></div>
+  </article>
+
+  <article class="helper" id="r-loop">
+    <h3>One shared file for every item in a list</h3>
+    <p class="what"><code>line.njk</code> turns one item into JSON. The loop hands each item over with <code>{ "item": item }</code> and prints the result with <code>| dump</code>. <code>{{ "," if not loop.last }}</code> puts a comma after every item except the last.</p>
+    <div class="ex" data-ex="loopLines"></div>
+  </article>
+
+  <article class="helper" id="r-daily">
+    <h3>A daily message that changes each run</h3>
+    <p class="what">Rotation, a greeting for first-timers and the date, together.</p>
+    <div class="ex" data-ex="daily"></div>
+  </article>
+</section>
+
+<!-- WORKSPACE -->
+<section class="lesson" id="workspace">
+  <p class="eyebrow">Workspace</p>
+  <h2>Your own templates</h2>
+  <div class="prose">
+    <p>A place to build real templates with the same <code>render.js</code>. Pick a file on the left to edit it; the output follows as you type, without saving.</p>
+    <ul>
+      <li><strong>Create</strong> a template by typing a name such as <code>letter.njk</code>.</li>
+      <li><strong>Initialise files</strong> creates the template's data and state files, with the data file filled with every value the template uses. It never overwrites anything.</li>
+      <li><strong>Render and save</strong> is a real run: counters and rotations move on, and the state file is saved.</li>
+    </ul>
+    <p>Files are kept in this browser. In Chrome or Edge, <strong>Open templates folder</strong> works on your project's real <code>templates</code> folder instead, saving to disk as you type.</p>
+  </div>
+  <div class="wsp" data-wsp="main"></div>
+</section>
+
+<!-- FILES -->
+<section class="lesson" id="files">
+  <p class="eyebrow">The code</p>
+  <h2>render.js, helpers.js and send.js</h2>
+  <div class="prose">
+    <p>A ready-made copy of this project, with these files, a <code>package.json</code> and two example templates, is in the <code>nunjucks-toolkit</code> folder that holds this page. Run <code>npm install</code> there to start. To set one up yourself, save both files in your project folder, next to the <code>templates</code> folder. <code>render.js</code> runs templates and holds the helpers that remember things between runs. <code>helpers.js</code> holds the date, list and JSON helpers. The examples on this page run exactly this code.</p>
+  </div>
+  <pre class="code" data-lang="sh"><code>node render.js init invoice.njk           # create invoice.data.json and invoice.state.json
+node render.js invoice.njk                # print the result
+node render.js invoice.njk out.txt        # save the result to a file
+node render.js invoice.njk --hold invoice # render without moving the invoice number on</code></pre>
+  <pre class="code" data-lang="js"><code>// From your own code
+const { render, init } = require('./render');
+init('invoice.njk');                          // safe to call every time
+const text = render('invoice.njk');
+const withSet = render('tags.njk', { tags: new Set(['a', 'b']) });   // extra values for this run
+const preview = render('invoice.njk', {}, { dryRun: true });          // the next run, nothing saved</code></pre>
+  <h3>render.js</h3>
+  <pre class="code" data-lang="js" id="render-src"><code>// render.js
+const fs = require('fs');
+const path = require('path');
+const nunjucks = require('nunjucks');
+const { addDateHelpers, addSetHelpers, addJsonHelpers } = require('./helpers');
+
+// Templates live in ./templates. Each template has two companion files beside it:
+//   invoice.njk          the template
+//   invoice.data.json    your values; you edit this file
+//   invoice.state.json   counters and other run-to-run values; render.js writes this file
+// `node render.js init invoice.njk` creates both companions.
+// `node render.js invoice.njk --hold topic` renders without moving "topic" on, and
+// `--reverse topic` steps it back one run (see the CLI at the end).
+const TEMPLATES = path.join(__dirname, 'templates');
+
+function companions(templateName) {
+  const base = templateName.replace(/\.[^./]+$/, '');
+  return {
+    template: path.join(TEMPLATES, templateName),
+    data: path.join(TEMPLATES, base + '.data.json'),
+    state: path.join(TEMPLATES, base + '.state.json')
+  };
+}
+
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8')); // broken JSON stops the run instead of losing data
+}
+
+function writeJson(file, value) {
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n');
+  fs.renameSync(tmp, file);               // atomic swap, never a half-written file
+}
+
+const env = new nunjucks.Environment(
+  new nunjucks.FileSystemLoader(TEMPLATES),
+  { autoescape: false, throwOnUndefined: true }
+);
+addDateHelpers(env); // now(), datetime(), | date, | dateAdd, daysBetween()
+addSetHelpers(env);  // | array, | unique, toSet()
+addJsonHelpers(env); // when(), json(), | json
+
+let state = {};    // the state file; changed during the render, saved after it
+let before = {};   // the state file as it was when this run started
+let thisRun = {};  // values already handed out during this run
+let afterRun = {}; // reset() and remember() changes, applied once the render succeeds
+let options = {};  // this run's --hold, --only and --reverse lists
+let keysUsed = new Set(); // state keys the template's helpers asked about
+
+// What `key` does on this run: 'move' on, 'hold' still, or 'reverse' one step back.
+// --reverse and --hold name keys; --only names the keys that move, so the rest hold.
+function mode(key) {
+  keysUsed.add(key);
+  if ((options.reverse || []).includes(key)) return 'reverse';
+  if ((options.hold || []).includes(key)) return 'hold';
+  if (options.only &amp;&amp; !options.only.includes(key)) return 'hold';
+  return 'move';
+}
+
+// Every helper gives one value per run, however many times the template uses it.
+function once(id, compute) {
+  if (!(id in thisRun)) thisRun[id] = compute();
+  return thisRun[id];
+}
+
+// This run's number. Adds `step` (default 1) once per run.
+// When held, it gives last run's number again (the first number, unsaved, if it never ran).
+// When reversed, it takes `step` off instead: 42 becomes 41.
+//   Invoice {{ counter("invoice") | pad(4) }}
+function counter(key, step = 1) {
+  return once('counter:' + key, () =&gt; {
+    const m = mode(key);
+    if (m === 'hold') return state[key] ?? step;
+    state[key] = (state[key] ?? 0) + (m === 'reverse' ? -step : step);
+    return state[key];
+  });
+}
+
+// This run's item from an array or Set: run 1 gets the first item, run 2 the second.
+// After the last item it starts over. Pass false as the third argument to stop with an error instead.
+// When held, it gives last run's item again (the first item, unsaved, if it never ran).
+// When reversed, it goes back to the item before last run's; before the first comes the last.
+//   Today's topic: {{ rotate("topic", topics) }}
+function rotate(key, items, wrap = true) {
+  return once('rotate:' + key, () =&gt; {
+    const list = Array.from(items ?? []);
+    if (list.length === 0) throw new Error(`rotate("${key}"): the list is empty`);
+    const used = state[key] ?? 0; // how far the previous runs got
+    const m = mode(key);
+    if (m === 'hold') return list[(Math.max(used, 1) - 1) % list.length];
+    if (m === 'reverse') {
+      if (!wrap &amp;&amp; used &lt;= 1) throw new Error(`rotate("${key}"): already at the first item, so it cannot go back`);
+      const back = used === 0 ? list.length - 1 : (((used - 2) % list.length) + list.length) % list.length;
+      state[key] = back + 1;
+      return list[back];
+    }
+    if (!wrap &amp;&amp; used &gt;= list.length) {
+      throw new Error(`rotate("${key}"): all ${list.length} items are used up`);
+    }
+    state[key] = (used % list.length) + 1;
+    return list[used % list.length];
+  });
+}
+
+// The item the next run will get from rotate().
+//   Coming up: {{ upcoming("topic", topics) }}
+function upcoming(key, items) {
+  rotate(key, items); // make sure this run has taken its item
+  const list = Array.from(items);
+  return list[(state[key] ?? 0) % list.length];
+}
+
+// True only on the first run that sees `value` under `key`. Seen values are saved as a list.
+// When held, it answers the same way but does not record the value, so the next run asks again.
+// When reversed, it forgets the value, so the next run sees it as new again.
+//   {% if firstTime("clients", client.id) %}Welcome aboard!{% endif %}
+function firstTime(key, value) {
+  return once('firstTime:' + key + ':' + JSON.stringify(value), () =&gt; {
+    const m = mode(key);
+    const seen = new Set(state[key] ?? []);
+    if (m === 'reverse') {
+      const had = seen.delete(value);
+      state[key] = Array.from(seen);
+      return !had;
+    }
+    if (seen.has(value)) return false;
+    if (m === 'hold') return true;
+    seen.add(value);
+    state[key] = Array.from(seen);
+    return true;
+  });
+}
+
+// What a key held when this run started, or `fallback` if it was never saved.
+//   Last invoice: {{ previous("invoice", "none") }}
+function previous(key, fallback = null) {
+  return before[key] ?? fallback;
+}
+
+// Set a key for the next run; prints nothing. {{ reset("topic") }} starts the rotation over.
+// Held or reversed, it does nothing.
+function reset(key, value = 0) {
+  if (mode(key) === 'move') afterRun[key] = value;
+  return '';
+}
+
+// Save any value for the next run; read it back with previous(). Sets are saved as arrays.
+// Held or reversed, it does nothing.
+function remember(key, value) {
+  if (mode(key) === 'move') afterRun[key] = value instanceof Set ? Array.from(value) : value;
+  return '';
+}
+
+// Render another template that outputs JSON, and use the result as data.
+//   {{ jsonFromFile("address.njk").city }}
+//   {{ jsonFromFile("address.njk", "streetAddress.streetName.streetNumber") }}
+//   {{ json({ "ship_to": jsonFromFile("address.njk"), "total": total }) }}
+// The other template sees the same data as this one. Loop variables are not passed on by
+// Nunjucks, so hand them over in an object, after the path or instead of it:
+//   jsonFromFile("line.njk", { "item": item })   jsonFromFile("line.njk", "sku", { "item": item })
+const inProgress = []; // templates being turned into JSON right now, to catch circles
+function jsonFromFile(templateName, path, extra) {
+  if (path !== undefined &amp;&amp; path !== null &amp;&amp; typeof path !== 'string') { extra = path; path = undefined; }
+  extra = extra || {};
+  const vars = { ...(this &amp;&amp; this.ctx), ...extra };
+  const value = once('jsonFromFile:' + templateName + ':' + JSON.stringify(extra), () =&gt; {
+    if (inProgress.includes(templateName)) {
+      throw new Error(`jsonFromFile: ${[...inProgress, templateName].join(' -&gt; ')} goes round in a circle`);
+    }
+    inProgress.push(templateName);
+    try {
+      const text = env.render(templateName, vars);
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        throw new Error(`jsonFromFile("${templateName}"): its output is not valid JSON (${err.message})`);
+      }
+    } finally {
+      inProgress.pop();
+    }
+  });
+  return path ? valueAt(value, path, templateName) : value;
+}
+
+// Follow a path such as "streetAddress.streetName.streetNumber" or "lines[0].sku" into a value.
+function valueAt(value, path, from) {
+  const parts = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+  let current = value;
+  const walked = [];
+  for (const part of parts) {
+    const where = walked.length ? '"' + walked.join('.') + '"' : 'the top level';
+    if (current === null || typeof current !== 'object') {
+      throw new Error(`jsonFromFile("${from}", "${path}"): ${where} is ${JSON.stringify(current)}, so it has no "${part}"`);
+    }
+    if (!(part in current)) {
+      const has = Object.keys(current).join(', ') || 'nothing';
+      throw new Error(`jsonFromFile("${from}", "${path}"): no "${part}" in ${where}. It has: ${has}`);
+    }
+    current = current[part];
+    walked.push(part);
+  }
+  return current;
+}
+
+for (const [name, fn] of Object.entries({ counter, rotate, upcoming, firstTime, previous, reset, remember, jsonFromFile })) {
+  env.addGlobal(name, fn);
+}
+
+// 42 | pad(4)  -&gt;  "0042"
+env.addFilter('pad', (n, width = 4) =&gt; String(n).padStart(width, '0'));
+
+// Render a template with its data file, then save its state file.
+// `extra` adds values JSON cannot hold, such as a Set or a Map, for this run only.
+// `opts` chooses what moves on:
+//   { hold: ['topic'] }    everything moves on except "topic", which repeats last run's value
+//   { only: ['invoice'] }  only "invoice" moves on; every other key repeats
+//   { reverse: ['topic'] } "topic" steps back one run; counters count down
+//   { dryRun: true }       show what the next run would print, and save nothing
+// `opts.report(lines)` receives a summary of what moved and what was held.
+function render(templateName, extra = {}, opts = {}) {
+  const files = companions(templateName);
+  if (!fs.existsSync(files.data)) {
+    throw new Error(`${path.basename(files.data)} is missing. Create it with: node render.js init ${templateName}`);
+  }
+  const data = readJson(files.data);
+  state = fs.existsSync(files.state) ? readJson(files.state) : {};
+  before = JSON.parse(JSON.stringify(state));
+  thisRun = {};
+  afterRun = {};
+  const both = (opts.hold || []).filter((k) =&gt; (opts.reverse || []).includes(k));
+  if (both.length) throw new Error(`${both.join(', ')}: a key cannot be both held and reversed`);
+  options = opts;
+  keysUsed = new Set();
+  inProgress.length = 0;
+  inProgress.push(templateName);
+  // Every template also gets `lastRun`: when it was last rendered successfully, or null.
+  const output = env.render(templateName, { lastRun: state.lastRun ?? null, ...data, ...extra });
+
+  Object.assign(state, afterRun);
+  if (!(opts.hold || []).includes('lastRun')) state.lastRun = new Date();
+  if (opts.report) opts.report(summary(before, state, opts));
+  if (!opts.dryRun) writeJson(files.state, state); // only reached when rendering worked
+  return output;
+}
+
+// One line per state key: what it was, what it is now, or that it was held.
+function summary(was, now, opts) {
+  const show = (v) =&gt; (v === undefined ? 'nothing' : JSON.stringify(v));
+  const lines = [];
+  for (const key of keysUsed) {
+    const m = mode(key);
+    if (m === 'hold') lines.push(`${key}: held at ${show(was[key])}`);
+    else if (m === 'reverse') lines.push(`${key}: ${show(was[key])} -&gt; ${show(now[key])} (reversed)`);
+    else if (JSON.stringify(was[key]) !== JSON.stringify(now[key])) lines.push(`${key}: ${show(was[key])} -&gt; ${show(now[key])}`);
+    else lines.push(`${key}: unchanged`);
+  }
+  for (const key of [...(opts.hold || []), ...(opts.only || []), ...(opts.reverse || [])]) {
+    if (key !== 'lastRun' &amp;&amp; !keysUsed.has(key)) lines.push(`${key}: no helper in this template uses this key (typo?)`);
+  }
+  if (opts.dryRun) lines.push('Dry run: nothing was saved');
+  return lines;
+}
+
+// Work out which values a template reads from its data, as an empty skeleton.
+//   {{ client.name }}                         gives { "client": { "name": "" } }
+//   {% for item in items %}{{ item.price }}   gives { "items": [{ "price": "" }] }
+// Includes, parent templates and jsonFromFile() templates are read too.
+function inferData(templateName) {
+  const { nodes, parser } = nunjucks;
+  const skip = new Set([...Object.keys(env.globals), 'loop', 'lastRun', 'super', 'caller']);
+  const defined = new Set(); // names the template sets itself
+  const visited = new Set();
+  const shape = {};
+
+  // Record a path like ['items', '[]', 'price']. '[]' means "an item of this list",
+  // '{}' means "this is an object". A blank value can grow into a list or object; nothing shrinks.
+  const isBlank = (v) =&gt; v === undefined || v === '';
+  const isObject = (v) =&gt; typeof v === 'object' &amp;&amp; v !== null &amp;&amp; !Array.isArray(v);
+  function touch(segments) {
+    let node = shape;
+    for (let i = 0; i &lt; segments.length; i++) {
+      const seg = segments[i];
+      const next = segments[i + 1];
+      if (seg === '[]') {                                  // node is a list; step into its first item
+        if (next === undefined || next === '{}') return;
+        if (next === '[]') { if (isBlank(node[0])) node[0] = []; }
+        else if (isBlank(node[0])) node[0] = {};
+        node = node[0];
+        if (typeof node !== 'object' || node === null) return;
+        continue;
+      }
+      if (seg === '{}') return;
+      if (next === undefined) { if (!(seg in node)) node[seg] = ''; return; }
+      if (next === '[]') { if (isBlank(node[seg])) node[seg] = []; if (!Array.isArray(node[seg])) return; }
+      else { if (isBlank(node[seg])) node[seg] = {}; if (!isObject(node[seg])) return; }
+      node = node[seg];
+    }
+  }
+
+  // Filters and helpers that tell us a value is a list (or, for dictsort, an object)
+  const LIST_FILTERS = new Set(['join', 'sort', 'first', 'last', 'unique', 'array', 'batch', 'slice',
+    'sum', 'groupby', 'select', 'reject', 'selectattr', 'rejectattr', 'random']);
+  const LIST_ARGS = { rotate: 1, upcoming: 1, toSet: 0 }; // which argument is the list
+
+  // client.name -&gt; ['client', 'name']; a loop variable resolves to the list item it stands for
+  function pathOf(node, scope) {
+    if (node instanceof nodes.Symbol) {
+      const name = node.value;
+      if (name in scope) return scope[name];
+      if (skip.has(name) || defined.has(name)) return null;
+      return [name];
+    }
+    if (node instanceof nodes.LookupVal &amp;&amp; node.val instanceof nodes.Literal) {
+      const base = pathOf(node.target, scope);
+      if (!base) return null;
+      return [...base, typeof node.val.value === 'number' ? '[]' : String(node.val.value)];
+    }
+    return null;
+  }
+
+  function readTemplate(name, scope) {
+    if (visited.has(name)) return;
+    visited.add(name);
+    let src;
+    try { src = fs.readFileSync(path.join(TEMPLATES, name), 'utf8'); } catch (err) { return; }
+    walk(parser.parse(src, [], env.opts), scope);
+  }
+
+  function walk(node, scope) {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) { node.forEach((n) =&gt; walk(n, scope)); return; }
+    if (!(node instanceof nodes.Node)) return;
+
+    if (node instanceof nodes.Symbol || node instanceof nodes.LookupVal) {
+      const p = pathOf(node, scope);
+      if (p) touch(p);
+      else if (node instanceof nodes.LookupVal) { walk(node.target, scope); walk(node.val, scope); }
+      return;
+    }
+    if (node instanceof nodes.For) {
+      let source = node.arr;
+      while (source instanceof nodes.Filter) { walk(source.args.children.slice(1), scope); source = source.args.children[0]; }
+      const listPath = pathOf(source, scope);
+      if (!listPath) walk(source, scope);
+      const inner = Object.assign(Object.create(null), scope);
+      if (node.name instanceof nodes.Array) {         // {% for key, value in object %}
+        if (listPath) touch([...listPath, '{}']);
+        node.name.children.forEach((s) =&gt; { inner[s.value] = null; });
+      } else {
+        if (listPath) touch([...listPath, '[]']);
+        inner[node.name.value] = listPath ? [...listPath, '[]'] : null;
+      }
+      walk(node.body, inner);
+      walk(node.else_, scope);
+      return;
+    }
+    if (node instanceof nodes.Set) {
+      walk(node.value, scope);
+      walk(node.body, scope);
+      node.targets.forEach((t) =&gt; defined.add(t.value));
+      return;
+    }
+    if (node instanceof nodes.Macro) {                 // also {% call %} blocks
+      const inner = Object.assign(Object.create(null), scope);
+      node.args.children.forEach((arg) =&gt; {
+        if (arg instanceof nodes.Symbol) inner[arg.value] = null;
+        else if (arg instanceof nodes.KeywordArgs) {
+          arg.children.forEach((pair) =&gt; { inner[pair.key.value] = null; walk(pair.value, scope); });
+        }
+      });
+      if (node.name instanceof nodes.Symbol) defined.add(node.name.value);
+      walk(node.body, inner);
+      return;
+    }
+    if (node instanceof nodes.Filter) {
+      const target = node.args.children[0];
+      const p = target &amp;&amp; pathOf(target, scope);
+      if (p &amp;&amp; LIST_FILTERS.has(node.name.value)) touch([...p, '[]']);
+      else if (p &amp;&amp; node.name.value === 'dictsort') touch([...p, '{}']);
+      walk(node.args, scope);
+      return;
+    }
+    if (node instanceof nodes.FunCall) {
+      if (node.name instanceof nodes.LookupVal) {     // a method call such as name.trim()
+        const p = pathOf(node.name.target, scope);
+        if (p) touch(p); else walk(node.name.target, scope);
+      } else if (node.name instanceof nodes.Symbol &amp;&amp; node.name.value in LIST_ARGS) {
+        const arg = node.args.children[LIST_ARGS[node.name.value]];
+        const p = arg &amp;&amp; pathOf(arg, scope);
+        if (p) touch([...p, '[]']);
+      } else if (node.name instanceof nodes.Symbol &amp;&amp; node.name.value === 'jsonFromFile') {
+        // jsonFromFile("x.njk") reads this template's data too. Names passed in the extra-values
+        // object, such as { "item": item }, come from the caller rather than the data file.
+        const target = node.args.children[0];
+        const passed = node.args.children.find((a) =&gt; a instanceof nodes.Dict &amp;&amp; !(a instanceof nodes.KeywordArgs));
+        const inner = Object.assign(Object.create(null), scope);
+        if (passed) {
+          passed.children.forEach((pair) =&gt; {
+            const key = pair.key instanceof nodes.Literal || pair.key instanceof nodes.Symbol ? String(pair.key.value) : null;
+            if (key) inner[key] = pathOf(pair.value, scope);
+          });
+        }
+        if (target instanceof nodes.Literal) readTemplate(target.value, inner);
+      }
+      walk(node.args, scope);
+      return;
+    }
+    if (node instanceof nodes.Is) {                    // x is divisibleby(3): skip the test name
+      walk(node.left, scope);
+      if (node.right instanceof nodes.FunCall) walk(node.right.args, scope);
+      return;
+    }
+    if (node instanceof nodes.Pair) { walk(node.value, scope); return; }
+    if (node instanceof nodes.Include || node instanceof nodes.Extends) {
+      if (node.template instanceof nodes.Literal) readTemplate(node.template.value, scope);
+      else walk(node.template, scope);
+      return;
+    }
+    if (node instanceof nodes.Import) { defined.add(node.target.value); return; }
+    if (node instanceof nodes.FromImport) {
+      node.names.children.forEach((n) =&gt; defined.add(n instanceof nodes.Pair ? n.value.value : n.value));
+      return;
+    }
+    if (node instanceof nodes.Block) { walk(node.body, scope); return; }
+    node.iterFields((value) =&gt; walk(value, scope));
+  }
+
+  readTemplate(templateName, Object.create(null));
+  return shape;
+}
+
+// Create a template's data and state files. Existing files are never replaced:
+// a data file that already exists only gets the keys it is missing.
+function init(templateName) {
+  const files = companions(templateName);
+  if (!fs.existsSync(files.template)) throw new Error(`Template not found: ${templateName}`);
+  const skeleton = inferData(templateName);
+  const report = { data: path.basename(files.data), state: path.basename(files.state), createdData: false, createdState: false, addedKeys: [] };
+
+  if (!fs.existsSync(files.data)) {
+    writeJson(files.data, skeleton);
+    report.createdData = true;
+    report.addedKeys = Object.keys(skeleton);
+  } else {
+    const data = readJson(files.data);
+    for (const key of Object.keys(skeleton)) {
+      if (!(key in data)) { data[key] = skeleton[key]; report.addedKeys.push(key); }
+    }
+    if (report.addedKeys.length) writeJson(files.data, data);
+  }
+  if (!fs.existsSync(files.state)) {
+    writeJson(files.state, {});
+    report.createdState = true;
+  }
+  return report;
+}
+
+function describe(r) {
+  const keys = r.addedKeys.length ? r.addedKeys.join(', ') : 'none';
+  return [
+    r.createdData ? `Created ${r.data} with keys: ${keys}` : (r.addedKeys.length ? `Added to ${r.data}: ${keys}` : `${r.data} already has every key`),
+    r.createdState ? `Created ${r.state}` : `${r.state} already exists`
+  ].join('\n');
+}
+
+// Split the command line into names and options. Keys can be repeated or comma-separated:
+//   --hold topic --hold invoice    --hold topic,invoice    --hold=topic,invoice
+function parseArgs(argv) {
+  const opts = { hold: [], reverse: [], only: null, dryRun: false };
+  const names = [];
+  for (let i = 0; i &lt; argv.length; i++) {
+    let [flag, value] = argv[i].startsWith('--') ? argv[i].split(/=(.*)/s) : [argv[i]];
+    if (flag === '--dry-run') opts.dryRun = true;
+    else if (flag === '--hold' || flag === '--only' || flag === '--reverse') {
+      if (value === undefined) value = argv[++i];
+      if (!value || value.startsWith('--')) throw new Error(`${flag} needs one or more keys, such as ${flag} invoice,topic`);
+      const keys = value.split(',').map((k) =&gt; k.trim()).filter(Boolean);
+      if (flag === '--hold') opts.hold.push(...keys);
+      else if (flag === '--reverse') opts.reverse.push(...keys);
+      else opts.only = [...(opts.only || []), ...keys];
+    } else if (flag.startsWith('--')) throw new Error(`Unknown option ${flag}`);
+    else names.push(flag);
+  }
+  return { names, opts };
+}
+
+const USAGE = `Usage:
+  node render.js init &lt;template.njk&gt; [more.njk ...]   create the data and state files
+  node render.js &lt;template.njk&gt; [output file]         render, then save the state file
+
+Options for rendering:
+  --hold &lt;keys&gt;      these keys repeat last run's value; everything else moves on
+  --only &lt;keys&gt;      only these keys move on; everything else repeats
+  --reverse &lt;keys&gt;   these keys step back one run: counters count down, rotate() goes back
+  --dry-run          print what the next run would give; save nothing
+Keys are the names given to counter(), rotate(), firstTime(), reset() and remember().
+Separate several with commas: --hold invoice,topic. --hold lastRun keeps lastRun too.`;
+
+module.exports = { render, init, inferData, describe, parseArgs };
+
+if (require.main === module) {
+  try {
+    const { names, opts } = parseArgs(process.argv.slice(2));
+    const [command, ...rest] = names;
+    const flagged = opts.hold.length || opts.reverse.length || opts.only || opts.dryRun;
+    if (!command) {
+      console.log(USAGE);
+    } else if (command === 'init') {
+      for (const name of rest) console.log(describe(init(name)));
+    } else {
+      if (flagged) opts.report = (lines) =&gt; console.error(lines.join('\n'));
+      const out = render(command, {}, opts);
+      if (rest[0] &amp;&amp; !opts.dryRun) fs.writeFileSync(rest[0], out);
+      else process.stdout.write(out);
+    }
+  } catch (err) {
+    console.error(err.message);
+    process.exitCode = 1;
+  }
+}</code></pre>
+  <h3>helpers.js</h3>
+  <pre class="code" data-lang="js" id="helpers-src"><code>// helpers.js: date, list and JSON helpers for Nunjucks
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+  'August', 'September', 'October', 'November', 'December'];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Turn a Date, a timestamp or a string into a Date.
+// "2026-12-25" means local midnight here (plain JavaScript would read it as UTC midnight).
+function toDate(value) {
+  if (value instanceof Date) return new Date(value.getTime());
+  if (value == null || value === '') throw new Error('Expected a date, got ' + JSON.stringify(value));
+  if (typeof value === 'string') {
+    const day = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (day) return new Date(+day[1], +day[2] - 1, +day[3]);
+    value = value.replace(/^(\d{4}-\d{2}-\d{2}) (\d)/, '$1T$2'); // accept "2026-12-25 18:30"
+  }
+  const d = new Date(value);
+  if (isNaN(d.getTime())) throw new Error('Not a valid date: ' + JSON.stringify(value));
+  return d;
+}
+
+// Tokens: YYYY YY MMMM MMM MM M DD D dddd ddd HH H hh h mm ss A
+// Put literal words in [brackets]: "D MMM [at] HH:mm"
+// A blank value ("" or null), common in a freshly initialised data file, prints the fallback,
+// or nothing: {{ lastRun | date("D MMM", "never") }}. An undefined variable is still an error.
+function formatDate(value, format = 'YYYY-MM-DD', fallback = '') {
+  if (value === null || value === '') return fallback;
+  const d = toDate(value);
+  const pad = (n) =&gt; String(n).padStart(2, '0');
+  const hours12 = d.getHours() % 12 || 12;
+  const parts = {
+    YYYY: d.getFullYear(), YY: pad(d.getFullYear() % 100),
+    MMMM: MONTHS[d.getMonth()], MMM: MONTHS[d.getMonth()].slice(0, 3),
+    MM: pad(d.getMonth() + 1), M: d.getMonth() + 1,
+    DD: pad(d.getDate()), D: d.getDate(),
+    dddd: DAYS[d.getDay()], ddd: DAYS[d.getDay()].slice(0, 3),
+    HH: pad(d.getHours()), H: d.getHours(), hh: pad(hours12), h: hours12,
+    mm: pad(d.getMinutes()), ss: pad(d.getSeconds()), A: d.getHours() &lt; 12 ? 'AM' : 'PM'
+  };
+  return format.replace(/\[([^\]]*)\]|YYYY|YY|MMMM|MMM|MM|M|DD|D|dddd|ddd|HH|H|hh|h|mm|ss|A/g,
+    (token, literal) =&gt; (literal !== undefined ? literal : parts[token]));
+}
+
+// Add minutes, hours, days, weeks, months or years. A negative amount subtracts.
+function dateAdd(value, amount, unit = 'days') {
+  const d = toDate(value);
+  const n = Number(amount);
+  const u = String(unit).replace(/s$/, '');
+  switch (u) {
+    case 'minute': d.setMinutes(d.getMinutes() + n); break;
+    case 'hour': d.setHours(d.getHours() + n); break;
+    case 'day': d.setDate(d.getDate() + n); break;
+    case 'week': d.setDate(d.getDate() + 7 * n); break;
+    case 'month':
+    case 'year': {
+      const day = d.getDate();
+      d.setDate(1);
+      if (u === 'month') d.setMonth(d.getMonth() + n);
+      else d.setFullYear(d.getFullYear() + n);
+      const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      d.setDate(Math.min(day, lastDay)); // Jan 31 + 1 month = Feb 28, not Mar 3
+      break;
+    }
+    default: throw new Error('Unknown unit "' + unit + '". Use minutes, hours, days, weeks, months or years.');
+  }
+  return d;
+}
+
+// Whole calendar days from a to b. Negative when b is earlier.
+function daysBetween(a, b) {
+  const start = toDate(a);
+  const end = toDate(b);
+  start.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+  return Math.round((end - start) / 86400000);
+}
+
+function addDateHelpers(env) {
+  env.addGlobal('now', () =&gt; new Date());
+  env.addGlobal('datetime', toDate);
+  env.addGlobal('daysBetween', daysBetween);
+  env.addFilter('date', formatDate);
+  env.addFilter('dateAdd', dateAdd);
+}
+
+// Nunjucks loops over Sets and Maps on its own, but sort, join, list and "in" do not
+// understand them. These fill the gaps.
+function addSetHelpers(env) {
+  env.addFilter('array', (value) =&gt; Array.from(value)); // Set to array; Map to [key, value] pairs
+  env.addFilter('unique', (value) =&gt; Array.from(new Set(value)));
+  env.addGlobal('toSet', (value) =&gt; new Set(value || []));
+}
+
+// Inline conditions and JSON output.
+// A false when() with no `otherwise` gives SKIP: it prints as nothing, and json() leaves it out.
+const SKIP = Object.freeze({ toString: () =&gt; '' });
+
+// when(condition, value)              value, or nothing
+// when(condition, value, otherwise)   value or otherwise
+function when(condition, value, otherwise = SKIP) {
+  return condition ? value : otherwise;
+}
+
+// Remove SKIP keys and list items; turn Sets, Maps and macro output into plain JSON values.
+function withoutSkipped(value) {
+  if (value === SKIP) return undefined;
+  if (value instanceof String) return String(value); // macro output
+  if (value instanceof Set) return withoutSkipped(Array.from(value));
+  if (value instanceof Map) return withoutSkipped(Object.fromEntries(value));
+  if (Array.isArray(value)) return value.filter((v) =&gt; v !== SKIP).map(withoutSkipped);
+  if (value &amp;&amp; typeof value === 'object' &amp;&amp; Object.getPrototypeOf(value) === Object.prototype) {
+    const out = {};
+    for (const [key, v] of Object.entries(value)) if (v !== SKIP) out[key] = withoutSkipped(v);
+    return out;
+  }
+  return value;
+}
+
+// json(value, indent) and value | json print valid JSON. Keys and list items from a false when()
+// are left out, so there are no commas to manage.
+function addJsonHelpers(env) {
+  const safe = env.getFilter('safe'); // keeps HTML escaping away from the quotes
+  const json = (value, indent = 2) =&gt; safe(JSON.stringify(withoutSkipped(value), null, indent));
+  env.addGlobal('when', when);
+  env.addGlobal('json', json);
+  env.addFilter('json', json);
+}
+
+module.exports = { addDateHelpers, addSetHelpers, addJsonHelpers, toDate, formatDate, dateAdd, daysBetween, when };</code></pre>
+
+  <h3 id="send">send.js</h3>
+  <div class="prose">
+    <p>Optional. <code>send.js</code> renders a template and sends the result to a URL, using the <code>fetch</code> built into Node 18 and later. It needs nothing else installed.</p>
+    <ol>
+      <li>It keeps a copy of the template's state file.</li>
+      <li>It renders the template, which moves counters on as usual.</li>
+      <li>It sends the result as the request body and waits for a 2xx reply, giving up after 30 seconds.</li>
+      <li>It keeps a copy of every payload in <code>sent/</code>, named by the local time it was sent, such as <code>invoice.2026-10-27T21-55-38.json</code>. A failed send ends in <code>.failed.json</code>.</li>
+      <li>If the request failed, it puts the state file back as it was, so the next try sends the same invoice number.</li>
+    </ol>
+    <p>Set where requests go at the top of <code>send.js</code>. Each template you send needs a path in <code>PATHS</code>, which is added to the base URL.</p>
+  </div>
+  <pre class="code" data-lang="js"><code>const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const METHOD = process.env.METHOD || 'POST';
+const HEADERS = { 'Content-Type': 'application/json' };
+
+const PATHS = {
+  'invoice.njk': '/invoices'
+};</code></pre>
+  <pre class="code" data-lang="sh"><code>node send.js invoice.njk                                    # POST to http://localhost:3000/invoices
+METHOD=PUT BASE_URL=https://api.example.com node send.js invoice.njk   # for one run
+node send.js invoice.njk --hold invoice                     # the same flags as render.js
+node send.js invoice.njk --dry-run                          # send the next payload, save no state</code></pre>
+  <div class="prose">
+    <p>With <code>METHOD=GET</code> or <code>METHOD=HEAD</code> it just makes the request: the template is not rendered, so no state changes and no copy is kept.</p>
+    <p>The server's reply is printed, followed by a line such as <code>Sent at 2026-10-27T22:10:27: 201 Created</code>. From your own code, <code>await send("invoice.njk")</code> returns the reply, and throws if the request failed.</p>
+  </div>
+  <pre class="code" data-lang="js" id="send-src"><code>// send.js: render a template, then send the result to a URL with fetch (built into Node 18+).
+// The state file only keeps this run if the request succeeds (a 2xx reply); otherwise it is put
+// back as it was, so a failed send does not use up an invoice number or a rotation step.
+// A copy of every payload is kept, named by the local time it was sent:
+// sent/&lt;name&gt;.&lt;time&gt;.json, or &lt;name&gt;.&lt;time&gt;.failed.json when the request failed.
+//
+//   node send.js invoice.njk                       sends to BASE_URL + PATHS["invoice.njk"]
+//   node send.js invoice.njk --hold invoice        render.js flags work too
+//   node send.js invoice.njk --dry-run             send the next payload without saving anything
+//   METHOD=PUT BASE_URL=https://api.example.com node send.js invoice.njk
+const fs = require('fs');
+const path = require('path');
+const { render, parseArgs } = require('./render');
+
+// Where requests go. BASE_URL and METHOD in the environment override these for one run.
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const METHOD = process.env.METHOD || 'POST';
+const HEADERS = { 'Content-Type': 'application/json' };
+const TIMEOUT_MS = 30000; // give up on a server that does not answer
+
+// The path each template is sent to, added to BASE_URL.
+const PATHS = {
+  'invoice.njk': '/invoices'
+};
+
+const TEMPLATES = path.join(__dirname, 'templates');
+const SENT = path.join(__dirname, 'sent');
+
+// This computer's local time, such as 2026-10-27T21:53:08
+function localTime(d = new Date()) {
+  const pad = (n) =&gt; String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+// Render `templateName` and send it as the request body.
+// `opts` takes the same choices as render(): { hold, only, reverse, dryRun, report }.
+// `to` can change where it goes for this call: { baseUrl, method, headers }.
+// GET and HEAD carry no body, so they skip the template: nothing is rendered, saved or kept.
+// Returns { sentAt, copy, reply }: the send time, where the payload copy was kept (null for
+// GET and HEAD), and the server's reply as { status, statusText, text }. Throws if the request fails.
+async function send(templateName, opts = {}, { baseUrl = BASE_URL, method = METHOD, headers = HEADERS } = {}) {
+  if (!(templateName in PATHS)) throw new Error(`No path for ${templateName}: add it to PATHS in send.js`);
+  method = method.toUpperCase();
+  if (!/^[A-Z]+$/.test(method)) throw new Error(`Not a request method: ${method}`);
+  const url = baseUrl.replace(/\/+$/, '') + PATHS[templateName];
+  const name = templateName.replace(/\.[^./]+$/, '');
+  const state = path.join(TEMPLATES, name + '.state.json');
+
+  const hasBody = method !== 'GET' &amp;&amp; method !== 'HEAD';
+  const saved = fs.existsSync(state) ? fs.readFileSync(state, 'utf8') : null; // the state file before this run
+  const body = hasBody ? render(templateName, {}, opts) : undefined;
+  const sentAt = localTime();
+
+  let reply = null;
+  let problem = null;
+  try {
+    const res = await fetch(url, { method, headers, body, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    reply = { status: res.status, statusText: res.statusText, text: await res.text() };
+    if (!res.ok) problem = `the server replied ${res.status} ${res.statusText}`;
+  } catch (err) {
+    if (err.name === 'TimeoutError') problem = `no reply after ${TIMEOUT_MS / 1000} seconds`;
+    else if (err.cause) problem = `could not reach the server (${err.cause.code || err.cause.message})`;
+    else problem = err.message;
+  }
+
+  if (!hasBody) {
+    if (problem) {
+      const err = new Error(`${method} ${url} at ${sentAt} failed: ${problem}.`);
+      err.reply = reply;
+      throw err;
+    }
+    return { sentAt, copy: null, reply };
+  }
+
+  // Colons are not allowed in file names on every system, so 21:53:08 becomes 21-53-08
+  fs.mkdirSync(SENT, { recursive: true });
+  const stem = path.join(SENT, `${name}.${sentAt.replace(/:/g, '-')}`);
+  const end = problem ? '.failed.json' : '.json';
+  let copy = stem + end;
+  for (let n = 2; fs.existsSync(copy); n++) copy = `${stem}-${n}${end}`; // two sends in the same second
+  fs.writeFileSync(copy, body);
+
+  if (problem) {
+    if (saved === null) fs.rmSync(state, { force: true });
+    else fs.writeFileSync(state, saved);
+    const err = new Error(`${method} ${url} at ${sentAt} failed: ${problem}.\n` +
+      `templates/${name}.state.json is back to how it was before this run. ` +
+      `Payload kept in ${path.relative(__dirname, copy)}`);
+    err.reply = reply;
+    throw err;
+  }
+  return { sentAt, copy, reply };
+}
+
+module.exports = { send };
+
+if (require.main === module) {
+  (async () =&gt; {
+    try {
+      const { names, opts } = parseArgs(process.argv.slice(2));
+      if (!names[0]) {
+        console.log('Usage: node send.js &lt;template.njk&gt; [--hold keys] [--only keys] [--reverse keys] [--dry-run]');
+        return;
+      }
+      if (opts.hold.length || opts.reverse.length || opts.only || opts.dryRun) {
+        opts.report = (lines) =&gt; console.error(lines.join('\n'));
+      }
+      const { sentAt, copy, reply } = await send(names[0], opts);
+      if (reply.text) console.log(reply.text); // the server's reply body
+      console.error(`Sent at ${sentAt}: ${reply.status} ${reply.statusText}.` +
+        (copy ? ` Payload kept in ${path.relative(__dirname, copy)}` : ''));
+    } catch (err) {
+      console.error(err.message);
+      if (err.reply &amp;&amp; err.reply.text) console.error('The server said: ' + err.reply.text);
+      process.exitCode = 1;
+    }
+  })();
+}</code></pre>
+</section>
+
+<!-- BASICS -->
+<section class="lesson" id="basics">
+  <p class="eyebrow">Language basics</p>
+  <h2>Nunjucks itself</h2>
+  <div class="prose"><p>The lessons below teach the Nunjucks language: printing values, filters, conditions, loops, macros and template inheritance. Each has live examples and some have challenges. Nothing in them depends on the helpers above.</p></div>
+</section>
+
+<!-- 1 SETUP -->
+<section class="lesson" id="setup">
+  <div class="lesson-head"><p class="eyebrow">Basics 1</p><label class="done"><input type="checkbox" id="done-setup" data-done="setup"> Mark complete</label></div>
+  <h2>Setup</h2>
+  <div class="prose">
+    <p>Install the package from npm. One dependency, no build step.</p>
+  </div>
+  <pre class="code" data-lang="sh"><code>npm install nunjucks</code></pre>
+  <div class="prose"><p>Point Nunjucks at a folder of templates, then render a file from that folder with a data object (the "context"). Autoescaping of HTML is on by default when you call <code>configure</code>.</p></div>
+  <pre class="code" data-lang="js"><code>const nunjucks = require('nunjucks');
+
+// Templates live in ./views. Autoescape is on by default.
+nunjucks.configure('views', { autoescape: true });
+
+// Render views/hello.njk with some data
+const html = nunjucks.render('hello.njk', { name: 'Ada' });
+
+// Or render a string directly, no files involved
+nunjucks.renderString('Hello {{ name }}', { name: 'Ada' }); // "Hello Ada"</code></pre>
+  <div class="prose"><p>Templates are plain text files. Any extension works; <code>.njk</code> is the convention (Eleventy uses it), and <code>.html</code> is common too.</p></div>
+  <pre class="code" data-lang="njk"><code>{# views/hello.njk #}
+&lt;h1&gt;Hello, {{ name }}!&lt;/h1&gt;</code></pre>
+  <div class="prose"><p>In the browser, load the full build from a CDN and call <code>renderString</code>. The full build includes the compiler. The "slim" build is smaller and only runs templates you precompiled ahead of time (see lesson 10).</p></div>
+  <pre class="code" data-lang="html"><code>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/nunjucks/3.2.4/nunjucks.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  document.body.innerHTML = nunjucks.renderString('&lt;p&gt;Hi {{ name }}&lt;/p&gt;', { name: 'Ada' });
+&lt;/script&gt;</code></pre>
+  <h3>Options you will actually use</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Option</th><th>Default</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>autoescape</code></td><td><code>true</code></td><td>Escape HTML in every <code>{{ }}</code> output unless marked safe.</td></tr>
+      <tr><td><code>throwOnUndefined</code></td><td><code>false</code></td><td>Throw instead of printing an empty string for undefined variables. Great for catching typos.</td></tr>
+      <tr><td><code>trimBlocks</code></td><td><code>false</code></td><td>Remove the first newline after a <code>{% %}</code> tag.</td></tr>
+      <tr><td><code>lstripBlocks</code></td><td><code>false</code></td><td>Strip leading spaces and tabs before a <code>{% %}</code> tag.</td></tr>
+      <tr><td><code>watch</code></td><td><code>false</code></td><td>Reload templates when files change (Node only, needs <code>chokidar</code>).</td></tr>
+      <tr><td><code>noCache</code></td><td><code>false</code></td><td>Recompile on every render. Useful in development.</td></tr>
+      <tr><td><code>express</code></td><td>none</td><td>An Express app to install Nunjucks into as its view engine.</td></tr>
+      <tr><td><code>tags</code></td><td>default tags</td><td>Change the delimiters, for example to avoid clashing with Vue or Handlebars.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 2 SYNTAX -->
+<section class="lesson" id="syntax">
+  <div class="lesson-head"><p class="eyebrow">Basics 2</p><label class="done"><input type="checkbox" id="done-syntax" data-done="syntax"> Mark complete</label></div>
+  <h2>Delimiters and variables</h2>
+  <div class="prose">
+    <p>Double braces print a value. Use dot or bracket notation to reach into objects and arrays, exactly like JavaScript. A missing value prints as an empty string rather than crashing, which is convenient and also a classic source of silent bugs.</p>
+    <p>Expressions support the usual math (<code>+ - * / // % **</code>), string joining with <code>~</code>, and calling functions or methods on values. Edit anything below.</p>
+  </div>
+  <div class="pg" data-pg="syntax"></div>
+  <div class="pg" data-pg="syntax-challenge"></div>
+</section>
+
+<!-- 3 FILTERS -->
+<section class="lesson" id="filters">
+  <div class="lesson-head"><p class="eyebrow">Basics 3</p><label class="done"><input type="checkbox" id="done-filters" data-done="filters"> Mark complete</label></div>
+  <h2>Filters</h2>
+  <div class="prose">
+    <p>A filter transforms a value. Write it after a pipe: <code>{{ name | upper }}</code>. Filters take arguments in parentheses and chain left to right. A <code>{% filter %}</code> block applies one filter to everything inside it.</p>
+  </div>
+  <div class="pg" data-pg="filters"></div>
+  <div class="note"><p class="eyebrow">Gotcha</p><p><code>default</code> only replaces <em>undefined</em> values. To also replace empty strings, zero and false, pass <code>true</code> as the second argument: <code>{{ title | default("Untitled", true) }}</code>.</p></div>
+  <div class="pg" data-pg="filters-challenge"></div>
+  <h3>Built-in filter reference</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Filter</th><th>What it does</th><th>Example</th></tr></thead>
+    <tbody>
+      <tr class="grp"><th colspan="3">Strings</th></tr>
+      <tr><td><code>upper</code> / <code>lower</code></td><td>Change case.</td><td><code>{{ "Hi" | lower }}</code> → hi</td></tr>
+      <tr><td><code>capitalize</code></td><td>First letter upper, the rest lower.</td><td><code>{{ "hELLO" | capitalize }}</code> → Hello</td></tr>
+      <tr><td><code>title</code></td><td>Capitalize each word.</td><td><code>{{ "a tale" | title }}</code> → A Tale</td></tr>
+      <tr><td><code>trim</code></td><td>Strip surrounding whitespace.</td><td><code>{{ "  x " | trim }}</code> → x</td></tr>
+      <tr><td><code>truncate(len, killwords, end)</code></td><td>Cut a string, add "..." by default.</td><td><code>{{ text | truncate(40) }}</code></td></tr>
+      <tr><td><code>replace(old, new, count)</code></td><td>Replace text, optionally only the first N matches.</td><td><code>{{ "aaa" | replace("a","b",2) }}</code> → bba</td></tr>
+      <tr><td><code>striptags</code></td><td>Remove HTML tags and collapse whitespace.</td><td><code>{{ html | striptags }}</code></td></tr>
+      <tr><td><code>nl2br</code></td><td>Turn newlines into <code>&lt;br&gt;</code>. Escape first so the result is marked safe.</td><td><code>{{ text | escape | nl2br }}</code></td></tr>
+      <tr><td><code>urlencode</code></td><td>Percent-encode for URLs.</td><td><code>{{ q | urlencode }}</code></td></tr>
+      <tr><td><code>urlize</code></td><td>Turn plain URLs into links.</td><td><code>{{ text | urlize | safe }}</code></td></tr>
+      <tr><td><code>wordcount</code></td><td>Count words.</td><td><code>{{ text | wordcount }}</code></td></tr>
+      <tr><td><code>indent(width, first)</code></td><td>Indent each line.</td><td><code>{{ text | indent(4) }}</code></td></tr>
+      <tr><td><code>center(width)</code></td><td>Pad to center text.</td><td><code>{{ "hi" | center(10) }}</code></td></tr>
+      <tr><td><code>string</code></td><td>Convert to a string.</td><td><code>{{ 42 | string }}</code></td></tr>
+      <tr class="grp"><th colspan="3">Arrays and objects</th></tr>
+      <tr><td><code>join(sep, attr)</code></td><td>Join items, optionally by one attribute.</td><td><code>{{ users | join(", ", "name") }}</code></td></tr>
+      <tr><td><code>length</code></td><td>Length of a string, array or object.</td><td><code>{{ items | length }}</code></td></tr>
+      <tr><td><code>first</code> / <code>last</code></td><td>First or last item.</td><td><code>{{ items | first }}</code></td></tr>
+      <tr><td><code>reverse</code></td><td>Reverse an array or string.</td><td><code>{{ items | reverse }}</code></td></tr>
+      <tr><td><code>sort(reverse, caseSens, attr)</code></td><td>Sort, optionally by attribute.</td><td><code>{{ users | sort(false, true, "age") }}</code></td></tr>
+      <tr><td><code>batch(size, fill)</code></td><td>Chunk into groups of N.</td><td><code>{% for row in items | batch(3) %}</code></td></tr>
+      <tr><td><code>slice(n)</code></td><td>Split into N roughly equal slices.</td><td><code>{% for col in items | slice(2) %}</code></td></tr>
+      <tr><td><code>groupby(attr)</code></td><td>Group objects by an attribute.</td><td><code>{% for team, people in users | groupby("team") %}</code></td></tr>
+      <tr><td><code>dictsort(caseSens, by)</code></td><td>Sort an object into [key, value] pairs.</td><td><code>{% for k, v in obj | dictsort %}</code></td></tr>
+      <tr><td><code>list</code></td><td>String to array of characters, object to array of {key, value}.</td><td><code>{{ "abc" | list }}</code></td></tr>
+      <tr><td><code>random</code></td><td>Pick a random item.</td><td><code>{{ quotes | random }}</code></td></tr>
+      <tr><td><code>sum(attr, start)</code></td><td>Add up numbers, optionally by attribute.</td><td><code>{{ cart | sum("price") }}</code></td></tr>
+      <tr><td><code>select(test)</code> / <code>reject(test)</code></td><td>Keep or drop items passing a test.</td><td><code>{{ nums | select("odd") }}</code></td></tr>
+      <tr><td><code>selectattr(attr)</code> / <code>rejectattr(attr)</code></td><td>Keep or drop objects whose attribute is truthy.</td><td><code>{{ users | selectattr("active") }}</code></td></tr>
+      <tr class="grp"><th colspan="3">Numbers</th></tr>
+      <tr><td><code>abs</code></td><td>Absolute value.</td><td><code>{{ -3 | abs }}</code> → 3</td></tr>
+      <tr><td><code>round(precision, method)</code></td><td>Round; method is "common", "ceil" or "floor".</td><td><code>{{ 2.555 | round(2) }}</code> → 2.56</td></tr>
+      <tr><td><code>int</code> / <code>float</code></td><td>Parse a number, with an optional fallback.</td><td><code>{{ "42" | int }}</code></td></tr>
+      <tr class="grp"><th colspan="3">Safety and debugging</th></tr>
+      <tr><td><code>safe</code></td><td>Mark a string as trusted HTML so it is not escaped.</td><td><code>{{ html | safe }}</code></td></tr>
+      <tr><td><code>escape</code> (or <code>e</code>)</td><td>Escape HTML even when autoescape is off.</td><td><code>{{ input | e }}</code></td></tr>
+      <tr><td><code>forceescape</code></td><td>Escape even strings already marked safe.</td><td><code>{{ html | forceescape }}</code></td></tr>
+      <tr><td><code>dump(spaces)</code></td><td>JSON.stringify the value. Handy for debugging.</td><td><code>{{ user | dump(2) | safe }}</code></td></tr>
+      <tr><td><code>default(value, boolean)</code></td><td>Fallback for undefined (or for all falsy values with <code>true</code>).</td><td><code>{{ x | default("none") }}</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 4 LOGIC -->
+<section class="lesson" id="logic">
+  <div class="lesson-head"><p class="eyebrow">Basics 4</p><label class="done"><input type="checkbox" id="done-logic" data-done="logic"> Mark complete</label></div>
+  <h2>Conditions and tests</h2>
+  <div class="prose">
+    <p><code>if</code>, <code>elif</code> and <code>else</code> work as you expect. Comparisons use JavaScript operators (<code>==</code>, <code>===</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;=</code> and so on), and logic uses the words <code>and</code>, <code>or</code> and <code>not</code>. <code>in</code> checks membership in an array or string.</p>
+    <p>There is also an inline form, <code>{{ "a" if cond else "b" }}</code>, and a set of <em>tests</em> written with <code>is</code>, such as <code>is defined</code> or <code>is divisibleby(3)</code>.</p>
+  </div>
+  <div class="pg" data-pg="logic"></div>
+  <div class="pg" data-pg="logic-challenge"></div>
+  <h3>Built-in tests</h3>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Test</th><th>True when</th></tr></thead>
+    <tbody>
+      <tr><td><code>defined</code> / <code>undefined</code></td><td>The variable exists (or does not).</td></tr>
+      <tr><td><code>null</code></td><td>The value is null.</td></tr>
+      <tr><td><code>truthy</code> / <code>falsy</code></td><td>JavaScript truthiness.</td></tr>
+      <tr><td><code>string</code>, <code>number</code>, <code>mapping</code>, <code>iterable</code>, <code>callable</code></td><td>The value is that type. <code>mapping</code> means a plain object.</td></tr>
+      <tr><td><code>even</code> / <code>odd</code></td><td>The number's parity.</td></tr>
+      <tr><td><code>divisibleby(n)</code></td><td>The number divides evenly by n.</td></tr>
+      <tr><td><code>equalto(x)</code>, <code>ne(x)</code>, <code>gt(x)</code>, <code>ge(x)</code>, <code>lt(x)</code>, <code>le(x)</code></td><td>Comparison as a test, useful inside <code>select</code> and <code>reject</code>.</td></tr>
+      <tr><td><code>upper</code> / <code>lower</code></td><td>The string is entirely that case.</td></tr>
+      <tr><td><code>escaped</code></td><td>The value is already marked safe.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 5 LOOPS -->
+<section class="lesson" id="loops">
+  <div class="lesson-head"><p class="eyebrow">Basics 5</p><label class="done"><input type="checkbox" id="done-loops" data-done="loops"> Mark complete</label></div>
+  <h2>Loops</h2>
+  <div class="prose">
+    <p><code>for</code> iterates arrays, objects (as <code>key, value</code>) and strings. Inside the loop a <code>loop</code> object tells you where you are. An <code>else</code> branch runs when there was nothing to iterate. Filters apply to the collection too, so sorting happens right in the loop header.</p>
+    <p>Three globals help with loops: <code>range(start, stop, step)</code>, <code>cycler(...values)</code> for alternating classes, and <code>joiner(sep)</code>, which prints its separator on every call except the first.</p>
+  </div>
+  <div class="pg" data-pg="loops"></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Loop variable</th><th>Value</th></tr></thead>
+    <tbody>
+      <tr><td><code>loop.index</code> / <code>loop.index0</code></td><td>Current position, counting from 1 / from 0.</td></tr>
+      <tr><td><code>loop.revindex</code> / <code>loop.revindex0</code></td><td>Positions remaining, counting to 1 / to 0.</td></tr>
+      <tr><td><code>loop.first</code> / <code>loop.last</code></td><td>True on the first / last pass.</td></tr>
+      <tr><td><code>loop.length</code></td><td>Total number of items.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="pg" data-pg="loops-challenge"></div>
+</section>
+
+<!-- 6 VARIABLES & WHITESPACE -->
+<section class="lesson" id="variables">
+  <div class="lesson-head"><p class="eyebrow">Basics 6</p><label class="done"><input type="checkbox" id="done-variables" data-done="variables"> Mark complete</label></div>
+  <h2>Variables and whitespace</h2>
+  <div class="prose">
+    <p><code>{% set %}</code> creates or updates a variable. The block form, <code>{% set x %}...{% endset %}</code>, captures everything rendered inside it, which is handy for building up a chunk of markup and reusing it.</p>
+    <p>Scope has one rule worth memorising: a variable first created inside a <code>for</code> loop (or a macro) stays there. If the variable already exists outside the loop, the loop updates it. So declare counters before the loop.</p>
+    <p>You probably noticed the blank lines the earlier loops left behind. Each tag sits on its own line, and that line's newline survives. A dash on either side of a tag, <code>{%-</code> or <code>-%}</code>, eats all whitespace on that side. It works on <code>{{-</code> too. Turn on <strong>Show whitespace</strong> in the output pane to see exactly what happens.</p>
+  </div>
+  <div class="pg" data-pg="variables"></div>
+  <div class="note"><p class="eyebrow">Tip</p><p>For whole projects, set <code>trimBlocks: true</code> and <code>lstripBlocks: true</code> in <code>configure</code>. Together they remove the newline after each tag and the indentation before it, so you rarely need dashes at all.</p></div>
+</section>
+
+<!-- 7 INHERITANCE -->
+<section class="lesson" id="inheritance">
+  <div class="lesson-head"><p class="eyebrow">Basics 7</p><label class="done"><input type="checkbox" id="done-inheritance" data-done="inheritance"> Mark complete</label></div>
+  <h2>Template inheritance</h2>
+  <div class="prose">
+    <p>This is the feature that makes Nunjucks worth it. A base template defines the page skeleton and marks regions with <code>{% block name %}</code>. A child template declares <code>{% extends "base.njk" %}</code> and overrides only the blocks it cares about. Inside an override, <code>{{ super() }}</code> inserts the parent's version of that block.</p>
+    <p>Anything in a child template outside a block is ignored. The template name in <code>extends</code> can be a variable, so a page can pick its layout from data. Switch to the <strong>Preview</strong> tab to see the rendered HTML.</p>
+  </div>
+  <div class="pg" data-pg="inheritance"></div>
+</section>
+
+<!-- 8 INCLUDE & MACROS -->
+<section class="lesson" id="macros">
+  <div class="lesson-head"><p class="eyebrow">Basics 8</p><label class="done"><input type="checkbox" id="done-macros" data-done="macros"> Mark complete</label></div>
+  <h2>Includes and macros</h2>
+  <div class="prose">
+    <p><code>{% include "file.njk" %}</code> renders another template in place, with access to the current context, including loop variables. Add <code>ignore missing</code> to skip silently when the file does not exist.</p>
+    <p>A <strong>macro</strong> is a reusable function that returns markup. It takes positional and keyword arguments with defaults. Put macros in their own file and bring them in with <code>{% import "forms.njk" as forms %}</code> or <code>{% from "forms.njk" import input %}</code>. Imported macros do not see your page's variables unless you add <code>with context</code>.</p>
+    <p><code>{% call %}</code> passes a block of content into a macro, where <code>{{ caller() }}</code> renders it. That is how you build wrappers like fieldsets, cards and modals.</p>
+  </div>
+  <div class="pg" data-pg="macros"></div>
+  <div class="pg" data-pg="macros-challenge"></div>
+</section>
+
+<!-- 9 ESCAPING -->
+<section class="lesson" id="escaping">
+  <div class="lesson-head"><p class="eyebrow">Basics 9</p><label class="done"><input type="checkbox" id="done-escaping" data-done="escaping"> Mark complete</label></div>
+  <h2>Escaping and safety</h2>
+  <div class="prose">
+    <p>With autoescape on, every <code>{{ }}</code> output has <code>&lt; &gt; &amp; " '</code> converted to HTML entities. That is what stops a user-supplied comment from injecting a script. When you have markup you trust, mark it with <code>| safe</code>. Output from macros and from <code>{% set %}</code> blocks is already marked safe.</p>
+    <p>Unlike Jinja, Nunjucks has no tag for switching escaping off in one region. Autoescape is an environment setting, so generating plain text means <code>autoescape: false</code> in <code>configure</code>. <code>{% raw %}...{% endraw %}</code> prints template syntax literally, which you need when the page itself documents Nunjucks (this page uses it a lot) or when another framework shares the curly braces.</p>
+  </div>
+  <div class="pg" data-pg="escaping"></div>
+  <div class="note"><p class="eyebrow">Gotcha</p><p>Only strings get escaped. Numbers and booleans pass straight through, and a value that was marked safe stays safe through most filters. If a custom filter returns HTML, wrap the result in <code>new nunjucks.runtime.SafeString(html)</code> so callers do not need to add <code>| safe</code>.</p></div>
+</section>
+
+<!-- 10 NODE -->
+<section class="lesson" id="node">
+  <div class="lesson-head"><p class="eyebrow">Basics 10</p><label class="done"><input type="checkbox" id="done-node" data-done="node"> Mark complete</label></div>
+  <h2>Node, Express and custom filters</h2>
+  <div class="prose">
+    <p><code>configure</code> returns an <code>Environment</code>. The environment is where you register your own filters and globals, and you can create several environments if different parts of an app need different settings.</p>
+  </div>
+  <pre class="code" data-lang="js"><code>const nunjucks = require('nunjucks');
+const env = nunjucks.configure('views', { autoescape: true, trimBlocks: true, lstripBlocks: true });
+
+// A filter is a plain function: the piped value comes first, arguments follow
+env.addFilter('shout', (str) => `${str}!`);
+env.addFilter('money', (n, currency = 'USD') =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(n));
+
+// Globals are available in every template
+env.addGlobal('now', () => new Date());
+
+// Async filters take a callback and are flagged with `true`
+env.addFilter('fetchTitle', (url, done) => {
+  getTitle(url).then((title) => done(null, title), done);
+}, true);</code></pre>
+  <div class="prose"><p>The editor below has <code>shout</code>, <code>money</code> and <code>now</code> already registered, so you can try them.</p></div>
+  <div class="pg" data-pg="node"></div>
+  <h3>Express</h3>
+  <div class="prose"><p>Pass the app to <code>configure</code> and Nunjucks installs itself as the view engine. Then <code>res.render</code> works as usual.</p></div>
+  <pre class="code" data-lang="js"><code>const express = require('express');
+const nunjucks = require('nunjucks');
+
+const app = express();
+nunjucks.configure('views', { autoescape: true, express: app, watch: true });
+app.set('view engine', 'njk');
+
+app.get('/', (req, res) => {
+  res.render('index', { name: 'Ada', items: ['one', 'two'] }); // renders views/index.njk
+});
+
+app.listen(3000);</code></pre>
+  <h3>Precompiling for the browser</h3>
+  <div class="prose"><p>Shipping the compiler to browsers is wasteful. Precompile your templates to a JavaScript file, load it with the slim build, and render by name as usual.</p></div>
+  <pre class="code" data-lang="sh"><code>npx nunjucks-precompile views > public/templates.js</code></pre>
+  <pre class="code" data-lang="html"><code>&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/nunjucks/3.2.4/nunjucks-slim.min.js"&gt;&lt;/script&gt;
+&lt;script src="/templates.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  // Precompiled templates are picked up automatically
+  document.body.innerHTML = nunjucks.render('hello.njk', { name: 'Ada' });
+&lt;/script&gt;</code></pre>
+  <h3>Eleventy</h3>
+  <div class="prose"><p>Eleventy treats <code>.njk</code> files as Nunjucks out of the box. Add filters through its config instead of a Nunjucks environment: <code>eleventyConfig.addFilter("money", fn)</code>. Everything else on this page applies unchanged, including layouts, which Eleventy wires up through front matter rather than <code>extends</code>.</p></div>
+</section>
+
+<!-- CHEAT SHEET -->
+<section class="lesson" id="cheatsheet">
+  <p class="eyebrow">Reference</p>
+  <h2>Cheat sheet</h2>
+  <div class="cheat">
+    <div>
+      <h3>Tags</h3>
+      <pre class="code" data-lang="njk"><code>{% if a %}{% elif b %}{% else %}{% endif %}
+{% for x in xs %}{% else %}{% endfor %}
+{% for k, v in obj %}{% endfor %}
+{% set x = 1 %}
+{% set x %}captured{% endset %}
+{% extends "base.njk" %}
+{% block name %}{{ super() }}{% endblock %}
+{% include "f.njk" ignore missing %}
+{% import "m.njk" as m %}
+{% from "m.njk" import a, b as c %}
+{% macro f(x, y=2) %}{% endmacro %}
+{% call f(1) %}body{% endcall %}
+{% filter upper %}text{% endfilter %}
+{% raw %}{{ literal }}{% endraw %}</code></pre>
+    </div>
+    <div>
+      <h3>Expressions</h3>
+      <pre class="code" data-lang="njk"><code>{{ a.b }}  {{ a["b"] }}  {{ xs[0] }}
+{{ 1 + 2 * 3 }}  {{ 7 // 2 }}  {{ 2 ** 8 }}
+{{ "a" ~ "b" }}            {# concat #}
+{{ x if cond else y }}      {# inline if #}
+{{ a == b }}  {{ a === b }}  {{ a != b }}
+{{ a and b }} {{ a or b }}  {{ not a }}
+{{ x in [1, 2, 3] }}
+{{ x is defined }}  {{ n is odd }}
+{{ fn(1, two=2) }}          {# call #}
+{{ name.toUpperCase() }}    {# JS method #}
+{{ xs | join(", ") | upper }}
+{{ r/^a.*/i.test(s) }}      {# regex #}</code></pre>
+    </div>
+    <div>
+      <h3>Loop variables and globals</h3>
+      <pre class="code" data-lang="njk"><code>loop.index    loop.index0
+loop.revindex loop.revindex0
+loop.first    loop.last
+loop.length
+
+range(0, 10, 2)
+{% set c = cycler("a", "b") %}
+{{ c.next() }}
+{% set j = joiner(", ") %}
+{{ j() }}item</code></pre>
+    </div>
+    <div>
+      <h3>Whitespace</h3>
+      <pre class="code" data-lang="njk"><code>{%- tag %}   eats whitespace before
+{% tag -%}   eats whitespace after
+{{- x -}}    works on output too
+
+configure(path, {
+  trimBlocks: true,
+  lstripBlocks: true
+})</code></pre>
+    </div>
+  </div>
+  <h3>Things that trip people up</h3>
+  <div class="prose">
+    <ul>
+      <li><strong>It is not Python.</strong> There is no <code>len()</code> or <code>.items()</code>. Use filters (<code>| length</code>) or JavaScript methods, which you can call directly: <code>{{ name.trim() }}</code>.</li>
+      <li><strong>Undefined is silent.</strong> A typo in a variable name prints nothing. Turn on <code>throwOnUndefined</code> while developing.</li>
+      <li><strong><code>==</code> is loose.</strong> It is JavaScript's double equals. Use <code>===</code> when types matter.</li>
+      <li><strong>Loop scope.</strong> Declare a variable before a loop if you want to update it inside the loop and read it afterwards.</li>
+      <li><strong>Paths.</strong> Template names in <code>extends</code>, <code>include</code> and <code>import</code> resolve from the configured search path, not from the current file, unless they start with <code>./</code> or <code>../</code>.</li>
+      <li><strong>Imported macros and context.</strong> They cannot see your page variables unless you import <code>with context</code>, or pass values as arguments (the cleaner option).</li>
+      <li><strong>Blank lines everywhere.</strong> Use <code>trimBlocks</code> and <code>lstripBlocks</code>, or dashes.</li>
+    </ul>
+  </div>
+  <footer class="end">The official documentation lives at <a href="https://mozilla.github.io/nunjucks/templating.html">mozilla.github.io/nunjucks</a>. Your progress checkmarks are saved in this browser only.</footer>
+</section>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/nunjucks/3.2.4/nunjucks.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- helpers ---------- */
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const span = (cls, text) => '<span class="' + cls + '">' + esc(text) + '</span>';
+
+  // Run a sticky-free global regex over src; `paint(match)` returns HTML for each hit, gaps are escaped.
+  function tokenize(src, re, paint) {
+    let out = '', last = 0, m;
+    re.lastIndex = 0;
+    while ((m = re.exec(src))) {
+      if (m[0] === '') { re.lastIndex++; continue; }
+      out += esc(src.slice(last, m.index)) + paint(m, src, re.lastIndex);
+      last = re.lastIndex;
+    }
+    return out + esc(src.slice(last));
+  }
+
+  /* Nunjucks: inside {{ }} and {% %} */
+  const NJK_KW = new Set(('if elif elseif else endif for endfor in set endset block endblock extends include import from as ' +
+    'macro endmacro call endcall filter endfilter raw endraw verbatim endverbatim autoescape endautoescape ' +
+    'with without context ignore missing and or not is true false none null True False None').split(' '));
+  function hlExpr(s) {
+    const RE = /("(?:\\.|[^"\\])*"?|'(?:\\.|[^'\\])*'?)|(\d+(?:\.\d+)?)|([A-Za-z_$][\w$]*)|(\s+)|([^\sA-Za-z_$\d"'])/g;
+    let out = '', prev = '', m;
+    while ((m = RE.exec(s))) {
+      const [t, str, num, id, ws] = m;
+      if (ws) { out += t; continue; }
+      if (str) out += span('h-str', t);
+      else if (num) out += span('h-num', t);
+      else if (id) {
+        let cls;
+        if (id === 'not' && prev === 'is') { out += span('h-kw', t); continue; } // "is not divisibleby"
+        if (prev === '|' || prev === 'is') cls = 'h-filter';          // filter or test name
+        else if (prev !== '.' && NJK_KW.has(id)) cls = 'h-kw';
+        else if (/^\s*\(/.test(s.slice(RE.lastIndex))) cls = 'h-fn';   // a call
+        else cls = 'h-var';
+        out += span(cls, t);
+      } else out += span(/[|~+\-*\/%=<>!]/.test(t) ? 'h-op' : 'h-punct', t);
+      prev = id || t;
+    }
+    return out;
+  }
+
+  /* HTML in the text between Nunjucks tags */
+  const HTML_RE = /(<!-{2}[\s\S]*?-->)|(<\/?[A-Za-z][\w-]*)|(\/?>)|([A-Za-z_:@][\w:.-]*)(?==)|(=)("[^"\n{]*"?|'[^'\n{]*'?)/g;
+  function hlHtml(text) {
+    return tokenize(text, HTML_RE, (m) => {
+      if (m[1]) return span('h-com', m[1]);
+      if (m[2]) return span('h-tag', m[2]);
+      if (m[3]) return span('h-tag', m[3]);
+      if (m[4]) return span('h-attr', m[4]);
+      return span('h-punct', m[5]) + span('h-str', m[6]);
+    });
+  }
+
+  // JSON text between Nunjucks tags. A string can be split by a tag ("INV-{{ n }}"),
+  // so `st.inStr` carries "inside a string" from one piece of text to the next.
+  const JSON_TEXT_RE = /("(?:\\.|[^"\\\n])*"?)(\s*:)?|(-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|\b(true|false|null)\b|([{}\[\],:])/g;
+  function hlJsonText(text, st) {
+    let out = '';
+    if (st.inStr) {
+      const end = text.search(/(?:^|[^\\])"/);
+      if (end < 0) return span('h-str', text);
+      const cut = text.indexOf('"', end) + 1;
+      out += span('h-str', text.slice(0, cut));
+      text = text.slice(cut);
+      st.inStr = false;
+    }
+    return out + tokenize(text, JSON_TEXT_RE, (m) => {
+      if (m[1]) {
+        if (m[1].length === 1 || !m[1].endsWith('"') || /^"(?:\\.|[^"\\])*\\"$/.test(m[1])) st.inStr = true;
+        return m[2] ? span('h-key', m[1]) + span('h-punct', m[2]) : span('h-str', m[1]);
+      }
+      if (m[3]) return span('h-num', m[3]);
+      if (m[4]) return span('h-kw', m[4]);
+      return span('h-punct', m[5]);
+    });
+  }
+
+  const NJK_RE = /\{#[\s\S]*?(?:#\}|$)|\{%-?[\s\S]*?(?:-?%\}|$)|\{\{-?[\s\S]*?(?:-?\}\}|$)/g;
+  function hlNjk(src) {
+    let out = '', last = 0, m;
+    // A template whose text (tags removed) starts with { or [ is a JSON template.
+    const json = /^\s*[\[{]/.test(src.replace(NJK_RE, ''));
+    const st = { inStr: false };
+    const text = (t) => (json ? hlJsonText(t, st) : hlHtml(t));
+    NJK_RE.lastIndex = 0;
+    while ((m = NJK_RE.exec(src))) {
+      if (m[0] === '') { NJK_RE.lastIndex++; continue; }
+      out += text(src.slice(last, m.index));
+      const t = m[0];
+      if (t[1] === '#') out += span('h-com', t);
+      else {
+        const cls = t[1] === '%' ? 'h-d-block' : 'h-d-out';
+        const open = t.match(/^(\{%-?|\{\{-?)/)[0];
+        const closeM = t.slice(open.length).match(/(-?%\}|-?\}\})$/);
+        const close = closeM ? closeM[0] : '';
+        out += span(cls, open) + hlExpr(t.slice(open.length, t.length - close.length)) + (close ? span(cls, close) : '');
+      }
+      last = NJK_RE.lastIndex;
+    }
+    return out + text(src.slice(last));
+  }
+
+  /* JavaScript */
+  const JS_KW = new Set('const let var function return new require import export from default async await if else for of in while try catch throw class extends true false null undefined module exports typeof this'.split(' '));
+  const JS_RE = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/)|('(?:\\.|[^'\\\n])*'|"(?:\\.|[^"\\\n])*"|`(?:\\.|[^`\\])*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$]*)|(=>|[=!]==?|\?\?|&&|\|\||[+\-*\/%<>?:]=?)/g;
+  function hlJs(src) {
+    return tokenize(src, JS_RE, (m, s, end) => {
+      if (m[1]) return span('h-com', m[1]);
+      if (m[2]) return span('h-str', m[2]);
+      if (m[3]) return span('h-num', m[3]);
+      if (m[4]) {
+        if (JS_KW.has(m[4])) return span('h-kw', m[4]);
+        if (/^\s*\(/.test(s.slice(end))) return span('h-fn', m[4]);
+        return esc(m[4]);
+      }
+      return span('h-op', m[5]);
+    });
+  }
+
+  /* JSON (data panes) */
+  const JSON_RE = /("(?:\\.|[^"\\\n])*"?)(\s*:)?|(-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b)|\b(true|false|null)\b|([{}\[\],])/g;
+  function hlJson(src) {
+    return tokenize(src, JSON_RE, (m) => {
+      if (m[1]) return m[2] ? span('h-key', m[1]) + span('h-punct', m[2]) : span('h-str', m[1]);
+      if (m[3]) return span('h-num', m[3]);
+      if (m[4]) return span('h-kw', m[4]);
+      return span('h-punct', m[5]);
+    });
+  }
+
+  /* Shell */
+  function hlSh(src) {
+    return src.split('\n').map((line) => {
+      const ci = line.search(/(^|\s)#/);
+      const code = ci >= 0 ? line.slice(0, ci) : line;
+      const com = ci >= 0 ? line.slice(ci) : '';
+      let first = true;
+      const body = tokenize(code, /("[^"]*"|'[^']*')|(--?[\w-]+)|([|>&;]+)|(\S+)/g, (m) => {
+        if (m[1]) return span('h-str', m[1]);
+        if (m[2]) return span('h-attr', m[2]);
+        if (m[3]) { first = /[|;&]/.test(m[3]); return span('h-op', m[3]); }
+        const out = first ? span('h-fn', m[4]) : esc(m[4]);
+        first = false;
+        return out;
+      });
+      return body + (com ? span('h-com', com) : '');
+    }).join('\n');
+  }
+  // Output panes: colour it when it is JSON, otherwise show it as plain text.
+  const hlOut = (s) => (/^\s*[\[{]/.test(s) ? hlJson(s) : esc(s));
+  function showWs(s) {
+    return esc(s).replace(/ /g, '<span class="ws">·</span>').replace(/\n/g, '<span class="ws">↵</span>\n');
+  }
+  const norm = (s) => String(s).replace(/\s+/g, ' ').trim();
+
+  function copyText(text, btn) {
+    const done = () => { const t = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = t; }, 1200); };
+    try {
+      navigator.clipboard.writeText(text).then(done, () => fallback());
+    } catch (e) { fallback(); }
+    function fallback() {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+
+  /* ---------- static code blocks ---------- */
+  document.querySelectorAll('.code').forEach((pre, i) => {
+    const code = pre.querySelector('code');
+    const lang = pre.dataset.lang;
+    const text = code.textContent;
+    if (lang === 'js') code.innerHTML = hlJs(text);
+    else if (lang === 'njk' || lang === 'html') code.innerHTML = hlNjk(text);
+    else if (lang === 'sh') code.innerHTML = hlSh(text);
+    else if (lang === 'json') code.innerHTML = hlJson(text);
+    const btn = document.createElement('button');
+    btn.className = 'btn sm copy'; btn.type = 'button'; btn.textContent = 'Copy'; btn.id = 'copy-' + i;
+    btn.addEventListener('click', () => copyText(text, btn));
+    pre.appendChild(btn);
+  });
+
+  /* ---------- playground definitions ---------- */
+  // Run the helpers.js source shown on the page, so the demos use exactly that code.
+  const HELPERS = (function () {
+    const el = document.querySelector('#helpers-src code');
+    const mod = { exports: {} };
+    try { new Function('module', 'exports', el.textContent)(mod, mod.exports); }
+    catch (e) { console.error('helpers.js failed to load', e); }
+    return mod.exports;
+  })();
+
+  const RENDER_SRC = document.querySelector('#render-src code').textContent;
+
+  const PG = {
+    subst: {
+      files: { 'welcome.txt.njk':
+`{# Every value below comes from the data pane #}
+Hello {{ client.name }},
+
+Order {{ order.id }} ships to {{ client.address.city }}, {{ client.address.country }}.
+First item: {{ order.items[0] }}
+{{ order.items | length }} items, total {{ order.total }} {{ currency | default("USD") }}
+Notes: {{ order.notes | default("none", true) }}
+
+Thanks, {{ sender | default("The team") }}` },
+      context: {
+        client: { name: 'Ada Lovelace', address: { city: 'London', country: 'UK' } },
+        order: { id: 'A-1009', items: ['Notebook', 'Pen', 'Ink'], total: 18.5, notes: '' },
+        currency: 'GBP'
+      }
+    },
+    dates: {
+      files: { 'dates.txt.njk':
+`{# now() is the moment the template renders #}
+Today:      {{ now() | date("dddd, D MMMM YYYY") }}
+Right now:  {{ now() | date("h:mm:ss A") }}
+ISO 8601:   {{ now().toISOString() }}
+
+{# Dates from the data pane are plain strings #}
+Launch:     {{ launch | date("D MMM YYYY [at] h:mm A") }}
+Deadline:   {{ deadline | date }}
+
+{# A date defined in the template itself #}
+{% set newYear = datetime("2027-01-01") %}
+New Year:   {{ newYear | date("ddd D MMM YYYY") }}
+
+{# Arithmetic #}
+In 30 days:          {{ now() | dateAdd(30, "days") | date("D MMM YYYY") }}
+Deadline + 1 month:  {{ deadline | dateAdd(1, "month") | date }}
+Launch - 90 minutes: {{ launch | dateAdd(-90, "minutes") | date("HH:mm") }}
+Days until launch:   {{ daysBetween(now(), launch) }}
+
+{# Comparisons work on dates, not on strings #}
+{% if datetime(deadline) < now() %}
+The deadline has passed.
+{% else %}
+The deadline is {{ daysBetween(now(), deadline) }} days away.
+{% endif %}` },
+      context: { launch: '2026-12-25T18:30', deadline: '2027-01-31' },
+      setup(env) { HELPERS.addDateHelpers(env); }
+    },
+    sets: {
+      files: { 'tags.txt.njk':
+`{# JSON has no Set type, so build one from an array #}
+{% set tags = toSet(post.tags) %}
+
+{# A for loop walks a Set in insertion order. Duplicates are already gone. #}
+{% for tag in tags %}
+{{ loop.index }}/{{ loop.length }}  {{ tag }}
+{% endfor %}
+{{ post.tags | length }} tags in the data, {{ tags.size }} unique
+
+{# .has() checks membership. The "in" operator throws on a Set. #}
+{% if tags.has("nunjucks") %}Tagged nunjucks.{% endif %}
+
+{# sort and join need an array, so convert with | array #}
+Sorted: {{ tags | array | sort | join(", ") }}
+
+{# Add to a Set inside the template #}
+{% set _ = tags.add("tutorial") %}
+After add: {{ tags | array | join(", ") }}
+
+{# Or skip the Set: | unique removes duplicates from an array #}
+Authors: {{ post.authors | unique | join(" and ") }}` },
+      context: { post: { tags: ['nunjucks', 'node', 'templates', 'node', 'nunjucks'], authors: ['Ada', 'Grace', 'Ada'] } },
+      setup(env) { HELPERS.addSetHelpers(env); }
+    },
+    syntax: {
+      files: { 'hello.njk':
+`{# This comment never reaches the output #}
+Hello, {{ user.name }}!
+First language: {{ user.langs[0] }}
+Same thing with brackets: {{ user["langs"][0] }}
+Missing values print nothing: [{{ user.nickname }}]
+
+Math works inline: {{ 2 ** 10 }}, {{ 7 // 2 }}, {{ 7 % 2 }}
+Join strings with ~: {{ "Nun" ~ "jucks" }} {{ user.name ~ " (" ~ user.langs | length ~ " languages)" }}
+Call JavaScript methods on values: {{ user.name.toUpperCase() }}` },
+      context: { user: { name: 'Ada', langs: ['JavaScript', 'Python'] } }
+    },
+    'syntax-challenge': {
+      files: { 'challenge.njk':
+`{# Print exactly:  Dune (1965) by Frank Herbert  #}
+{{ book.title }}` },
+      context: { book: { title: 'Dune', year: 1965, author: { first: 'Frank', last: 'Herbert' } } },
+      challenge: {
+        goal: 'Print the book as "Dune (1965) by Frank Herbert", pulling every piece from the data.',
+        expected: 'Dune (1965) by Frank Herbert',
+        solution: { 'challenge.njk': `{{ book.title }} ({{ book.year }}) by {{ book.author.first }} {{ book.author.last }}` }
+      }
+    },
+    filters: {
+      files: { 'filters.njk':
+`{{ title | upper }}
+{{ title | lower | replace("nunjucks", "templates") }}
+{{ tags | join(", ") }}
+{{ tags | length }} tags, the first is "{{ tags | first }}"
+{{ missing | default("a fallback value") }}
+{{ price | round(2) }} rounded, {{ price | round(0, "floor") }} floored
+{{ "A very long sentence that keeps going and going" | truncate(24) }}
+{{ user | dump(2) | safe }}
+{% filter title %}filter blocks transform a whole chunk of text{% endfilter %}` },
+      context: { title: 'Learning Nunjucks', tags: ['html', 'javascript', 'templates'], price: 19.987, user: { name: 'Ada', admin: true } }
+    },
+    'filters-challenge': {
+      files: { 'challenge.njk':
+`{# Turn the tags into:  HTML / CSS / JAVASCRIPT  #}
+{{ tags }}` },
+      context: { tags: ['html', 'css', 'javascript'] },
+      challenge: {
+        goal: 'Print the tags as "HTML / CSS / JAVASCRIPT" using two chained filters.',
+        expected: 'HTML / CSS / JAVASCRIPT',
+        solution: { 'challenge.njk': `{{ tags | join(" / ") | upper }}` }
+      }
+    },
+    logic: {
+      files: { 'logic.njk':
+`{% if user.role == "admin" %}
+Welcome back, boss.
+{% elif user.role in ["editor", "author"] %}
+You can write and edit posts.
+{% else %}
+Read-only access.
+{% endif %}
+
+Cart: {{ "empty" if cart | length == 0 else (cart | length) ~ " items" }}
+{% if score is divisibleby(5) and score > 50 %}Nice round score: {{ score }}.{% endif %}
+{% if user.nickname is not defined %}No nickname set.{% endif %}
+{% if not user.banned and cart %}Ready to check out.{% endif %}` },
+      context: { user: { role: 'editor', banned: false }, cart: ['book', 'pen'], score: 75 }
+    },
+    'logic-challenge': {
+      files: { 'challenge.njk':
+`{# Print Hot when temp is 30 or more, Mild when 15 or more, otherwise Cold.
+   The checker runs this with temp = 31, 20 and 3. #}
+{% if temp >= 30 %}
+Hot
+{% endif %}` },
+      context: { temp: 31 },
+      challenge: {
+        goal: 'Classify the temperature: "Hot" at 30 or above, "Mild" at 15 or above, otherwise "Cold". Checked against three temperatures.',
+        cases: [
+          { context: { temp: 31 }, expected: 'Hot' },
+          { context: { temp: 20 }, expected: 'Mild' },
+          { context: { temp: 3 }, expected: 'Cold' }
+        ],
+        solution: { 'challenge.njk':
+`{% if temp >= 30 %}
+Hot
+{% elif temp >= 15 %}
+Mild
+{% else %}
+Cold
+{% endif %}` }
+      }
+    },
+    loops: {
+      files: { 'loops.njk':
+`{% for p in people | sort(false, true, "name") %}
+{{ loop.index }}. {{ p.name }} ({{ p.age }}){{ "," if not loop.last }}
+{% else %}
+No people in the list.
+{% endfor %}
+
+{% for key, value in settings %}
+{{ key }} = {{ value }}
+{% endfor %}
+
+Range: {% for n in range(1, 6) %}{{ n }}{{ ", " if not loop.last }}{% endfor %}
+
+{% set stripe = cycler("odd", "even") %}
+{% for p in people %}{{ p.name }} is {{ stripe.next() }} {{ "(first)" if loop.first }}{{ "(last)" if loop.last }}
+{% endfor %}` },
+      context: { people: [{ name: 'Grace', age: 36 }, { name: 'Ada', age: 36 }, { name: 'Linus', age: 28 }], settings: { theme: 'dark', lang: 'en' } }
+    },
+    'loops-challenge': {
+      files: { 'challenge.njk':
+`{# Produce a numbered list, one item per line:
+   1. apple
+   2. banana
+   3. cherry #}
+{% for item in items %}
+{{ item }}
+{% endfor %}` },
+      context: { items: ['apple', 'banana', 'cherry'] },
+      challenge: {
+        goal: 'Number each fruit, starting at 1: "1. apple", "2. banana", "3. cherry".',
+        expected: '1. apple\n2. banana\n3. cherry',
+        solution: { 'challenge.njk':
+`{% for item in items %}
+{{ loop.index }}. {{ item }}
+{% endfor %}` }
+      }
+    },
+    variables: {
+      files: { 'variables.njk':
+`{% set greeting = "Hi" %}
+{% set total = prices | sum %}
+{{ greeting }}! Your total is {{ total }}.
+
+{# Capture a whole chunk of output into a variable #}
+{% set banner %}
+=== {{ greeting | upper }} THERE ===
+{% endset %}
+{{ banner | trim }}
+
+{# A variable first set inside a loop stays in the loop #}
+{% for p in prices %}{% set last = p %}{% endfor %}
+After the loop, last is: [{{ last }}]
+
+{# A variable declared before the loop is updated by it #}
+{% set count = 0 %}
+{% for p in prices %}{% set count = count + 1 %}{% endfor %}
+After the loop, count is: {{ count }}
+
+{# Whitespace control: the dash eats whitespace on that side #}
+Without dashes:
+{% for p in prices %}
+  {{ p }},
+{% endfor %}
+With dashes:
+{% for p in prices -%}
+  {{ p }},
+{%- endfor %}` },
+      context: { prices: [4.5, 1.25, 10] }
+    },
+    inheritance: {
+      entry: 'page.njk',
+      files: {
+        'page.njk':
+`{% extends "base.njk" %}
+
+{# Text outside a block is ignored in a child template #}
+
+{% block title %}{{ title }} · {{ super() }}{% endblock %}
+
+{% block nav %}
+  {{ super() }}
+  <a href="#settings">Settings</a>
+{% endblock %}
+
+{% block content %}
+  <h1>Hello, {{ user.name }}</h1>
+  <p>Only the blocks you override change. The footer below comes from base.njk untouched.</p>
+{% endblock %}`,
+        'base.njk':
+`<header>
+  <strong>{% block title %}My Site{% endblock %}</strong>
+  <nav>{% block nav %}<a href="#home">Home</a>{% endblock %}</nav>
+</header>
+<main>
+  {% block content %}
+  <p>Default content. Child templates usually replace this.</p>
+  {% endblock %}
+</main>
+<footer>{% block footer %}Built with Nunjucks{% endblock %}</footer>`
+      },
+      context: { title: 'Dashboard', user: { name: 'Ada' } }
+    },
+    macros: {
+      entry: 'page.njk',
+      files: {
+        'page.njk':
+`{% from "forms.njk" import input, fieldset %}
+
+{% call fieldset("Sign up") %}
+  {{ input("email", type="email") }}
+  {{ input("password", type="password", label="Choose a password") }}
+{% endcall %}
+
+<ul>
+{% for product in products %}
+  {% include "card.njk" %}
+{% endfor %}
+</ul>
+
+{% include "promo.njk" ignore missing %}`,
+        'forms.njk':
+`{% macro input(name, value="", type="text", label="") %}
+<label>{{ label or name | title }}
+  <input type="{{ type }}" name="{{ name }}" value="{{ value }}">
+</label>
+{% endmacro %}
+
+{% macro fieldset(legend) %}
+<fieldset>
+  <legend>{{ legend }}</legend>
+  {{ caller() }}
+</fieldset>
+{% endmacro %}`,
+        'card.njk':
+`<li>{{ loop.index }}. {{ product.name }}, USD {{ product.price | round(2) }}</li>`
+      },
+      context: { products: [{ name: 'Notebook', price: 4.5 }, { name: 'Pen', price: 1.25 }] }
+    },
+    'macros-challenge': {
+      files: { 'challenge.njk':
+`{# Give the macro a second argument "tone" that defaults to "info",
+   and add it as a class:  badge badge-info  #}
+{% macro badge(text) %}
+<span class="badge">{{ text }}</span>
+{% endmacro %}
+
+{{ badge("New") }}
+{{ badge("Sold out", "danger") }}` },
+      context: {},
+      challenge: {
+        goal: 'Finish the macro so the two calls print <span class="badge badge-info">New</span> and <span class="badge badge-danger">Sold out</span>.',
+        expected: '<span class="badge badge-info">New</span> <span class="badge badge-danger">Sold out</span>',
+        solution: { 'challenge.njk':
+`{% macro badge(text, tone="info") %}
+<span class="badge badge-{{ tone }}">{{ text }}</span>
+{% endmacro %}
+
+{{ badge("New") }}
+{{ badge("Sold out", "danger") }}` }
+      }
+    },
+    escaping: {
+      files: { 'escaping.njk':
+`User input, escaped automatically:
+{{ comment }}
+
+Trusted markup, marked safe:
+{{ widget | safe }}
+
+Force escaping, even on a value marked safe:
+{{ widget | safe | forceescape }}
+
+Literal template syntax with raw:
+{% raw %}{{ this is printed, not rendered }}{% endraw %}
+
+Escape explicitly, then keep the line breaks:
+{{ bio | escape | nl2br }}` },
+      // "<\/" keeps the browser from reading this string as the end of the page's own script tag
+      context: { comment: '<b>Nice</b> post <script>alert("x")<\/script>', widget: '<em>trusted markup</em>', bio: 'Line one <i>with a tag</i>\nLine two' }
+    },
+    node: {
+      files: { 'custom.njk':
+`{{ product | shout }}
+{{ price | money }}
+{{ price | money("EUR") }}
+{{ shipping | money("JPY") }}
+Rendered in {{ now().getFullYear() }}` },
+      context: { product: 'Notebook', price: 4.5, shipping: 1200 },
+      setup(env) {
+        env.addFilter('shout', (s) => String(s) + '!');
+        env.addFilter('money', (n, currency) => new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(n));
+        env.addGlobal('now', () => new Date());
+      }
+    }
+  };
+
+  /* ---------- environment with an in-memory loader ---------- */
+  function makeEnv(files, setup) {
+    const loader = {
+      getSource(name) {
+        if (!Object.prototype.hasOwnProperty.call(files, name)) return null;
+        return { src: files[name], path: name, noCache: true };
+      }
+    };
+    const env = new nunjucks.Environment(loader, { autoescape: true });
+    if (setup) setup(env);
+    return env;
+  }
+
+  /* ---------- overlay editor ---------- */
+  function makeEditor(id, value, highlight, onChange, json) {
+    const wrap = document.createElement('div');
+    wrap.className = 'editor' + (json ? ' is-json' : '');
+    const pre = document.createElement('pre'); pre.setAttribute('aria-hidden', 'true');
+    const code = document.createElement('code'); pre.appendChild(code);
+    const ta = document.createElement('textarea');
+    ta.id = id; ta.spellcheck = false; ta.setAttribute('autocapitalize', 'off'); ta.setAttribute('autocomplete', 'off');
+    ta.setAttribute('aria-label', json ? 'Template data as JSON' : 'Template source');
+    wrap.appendChild(pre); wrap.appendChild(ta);
+    function paint() {
+      const v = ta.value;
+      code.innerHTML = highlight(v) + (v.endsWith('\n') || v === '' ? ' ' : '');
+    }
+    ta.addEventListener('input', () => { paint(); onChange(ta.value); });
+    const api = {
+      el: wrap,
+      get value() { return ta.value; },
+      set value(v) { ta.value = v; paint(); }
+    };
+    api.value = value;
+    return api;
+  }
+
+  /* ---------- playground ---------- */
+  function buildPlayground(host, id, cfg) {
+    if (typeof nunjucks === 'undefined') {
+      host.innerHTML = '<div class="unavailable">The live editor needs the Nunjucks library, which did not load. The examples still read fine; the code is shown in the lesson text.</div>';
+      return;
+    }
+    const names = Object.keys(cfg.files);
+    const entry = cfg.entry || names[0];
+    const state = { files: Object.assign({}, cfg.files), active: entry, ctxText: JSON.stringify(cfg.context || {}, null, 2), view: 'text', ws: false };
+
+    host.innerHTML =
+      '<div class="pane">' +
+        '<div class="pane-head"><span class="pane-title">Template</span><div class="tabs files"></div><button type="button" class="btn sm reset" id="' + id + '-reset">Reset</button></div>' +
+        '<div class="slot-tpl"></div>' +
+        '<div class="pane-head"><span class="pane-title">Data (JSON)</span></div>' +
+        '<div class="slot-ctx"></div>' +
+        '<p class="ctx-err" hidden></p>' +
+      '</div>' +
+      '<div class="pane">' +
+        '<div class="pane-head"><span class="pane-title">Output</span><div class="tabs views">' +
+          '<button type="button" class="tab is-active" data-view="text">Text</button>' +
+          '<button type="button" class="tab" data-view="preview">Preview</button></div>' +
+          '<label class="check"><input type="checkbox" id="' + id + '-ws"> Show whitespace</label>' +
+        '</div>' +
+        '<pre class="out" aria-live="polite"></pre>' +
+        '<div class="preview" hidden></div>' +
+      '</div>';
+
+    const fileTabs = host.querySelector('.tabs.files');
+    const outPre = host.querySelector('.out');
+    const previewHost = host.querySelector('.preview');
+    const shadow = previewHost.attachShadow({ mode: 'open' });
+    const ctxErr = host.querySelector('.ctx-err');
+
+    const tpl = makeEditor(id + '-tpl', state.files[state.active], hlNjk, (v) => { state.files[state.active] = v; schedule(); });
+    const ctx = makeEditor(id + '-ctx', state.ctxText, hlJson, (v) => { state.ctxText = v; schedule(); }, true);
+    host.querySelector('.slot-tpl').appendChild(tpl.el);
+    host.querySelector('.slot-ctx').appendChild(ctx.el);
+
+    function drawTabs() {
+      fileTabs.innerHTML = '';
+      if (names.length < 2) { fileTabs.hidden = true; return; }
+      names.forEach((n) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'tab' + (n === state.active ? ' is-active' : ''); b.textContent = n;
+        b.addEventListener('click', () => { state.active = n; tpl.value = state.files[n]; drawTabs(); });
+        fileTabs.appendChild(b);
+      });
+    }
+    drawTabs();
+
+    host.querySelectorAll('.tabs.views .tab').forEach((b) => b.addEventListener('click', () => {
+      state.view = b.dataset.view;
+      host.querySelectorAll('.tabs.views .tab').forEach((x) => x.classList.toggle('is-active', x === b));
+      outPre.hidden = state.view !== 'text';
+      previewHost.hidden = state.view !== 'preview';
+    }));
+    host.querySelector('#' + id + '-ws').addEventListener('change', (e) => { state.ws = e.target.checked; render(); });
+    host.querySelector('.reset').addEventListener('click', () => {
+      state.files = Object.assign({}, cfg.files); state.ctxText = JSON.stringify(cfg.context || {}, null, 2);
+      tpl.value = state.files[state.active]; ctx.value = state.ctxText;
+      render();
+    });
+
+    // Challenge box
+    let challengeUI = null;
+    if (cfg.challenge) {
+      const box = document.createElement('div');
+      box.className = 'challenge';
+      box.innerHTML =
+        '<div class="goal"><p class="eyebrow">Challenge</p><p></p></div>' +
+        '<div class="status"><span class="pill">Not yet</span><button type="button" class="btn sm" id="' + id + '-solution">Show solution</button></div>';
+      box.querySelector('.goal p:last-child').textContent = cfg.challenge.goal;
+      host.parentNode.insertBefore(box, host);
+      challengeUI = { pill: box.querySelector('.pill') };
+      box.querySelector('#' + id + '-solution').addEventListener('click', () => {
+        state.files = Object.assign({}, cfg.challenge.solution);
+        tpl.value = state.files[state.active]; render();
+      });
+    }
+
+    let timer = null;
+    function schedule() { clearTimeout(timer); timer = setTimeout(render, 120); }
+
+    function render() {
+      let data;
+      try {
+        data = state.ctxText.trim() ? JSON.parse(state.ctxText) : {};
+        ctxErr.hidden = true;
+      } catch (e) {
+        ctxErr.textContent = 'Data is not valid JSON: ' + e.message; ctxErr.hidden = false; return;
+      }
+      let out = '', err = null;
+      try { out = makeEnv(state.files, cfg.setup).render(entry, data); }
+      catch (e) { err = e.message || String(e); }
+      if (err) {
+        outPre.className = 'out err'; outPre.textContent = err; shadow.innerHTML = '';
+      } else {
+        outPre.className = 'out'; outPre.innerHTML = state.ws ? showWs(out) : hlOut(out);
+        shadow.innerHTML = '<style>:host{display:block;font:15px/1.5 inherit} :host([hidden]){display:none} a{color:inherit} fieldset{border:1px solid currentColor;border-radius:4px;padding:8px 12px} label{display:block;margin:6px 0} input{font:inherit;padding:4px 6px}</style>' + out;
+      }
+      if (challengeUI) checkChallenge();
+    }
+
+    function checkChallenge() {
+      const ch = cfg.challenge;
+      const cases = ch.cases || [{ context: cfg.context || {}, expected: ch.expected }];
+      let pass = 0;
+      cases.forEach((c) => {
+        try { if (norm(makeEnv(state.files, cfg.setup).render(entry, c.context)) === norm(c.expected)) pass++; } catch (e) {}
+      });
+      const ok = pass === cases.length;
+      challengeUI.pill.className = 'pill' + (ok ? ' ok' : '');
+      challengeUI.pill.textContent = cases.length > 1 ? (ok ? 'Solved · ' + pass + ' of ' + cases.length : pass + ' of ' + cases.length + ' cases pass') : (ok ? 'Solved' : 'Not yet');
+    }
+
+    render();
+  }
+
+  /* ---------- workspace: templates with their data and state files ---------- */
+  const isJson = (n) => /\.json$/i.test(n);
+  const baseOf = (n) => n.replace(/\.[^./]+$/, '');
+  const companionNames = (t) => ({ data: baseOf(t) + '.data.json', state: baseOf(t) + '.state.json' });
+  const escAttr = (s) => esc(s).replace(/"/g, '&quot;');
+
+  // Load the render.js shown on the page over an in-memory copy of the files (paths inside templates/).
+  function renderJsOn(files) {
+    const disk = {};
+    for (const n in files) disk['./templates/' + n] = files[n];
+    const fs = {
+      existsSync: (f) => f in disk,
+      readFileSync(f) {
+        if (!(f in disk)) { const e = new Error('ENOENT: no such file ' + f.replace('./templates/', '')); e.code = 'ENOENT'; throw e; }
+        return disk[f];
+      },
+      writeFileSync(f, d) { disk[f] = String(d); },
+      renameSync(a, b) { disk[b] = disk[a]; delete disk[a]; }
+    };
+    const nj = Object.assign({}, nunjucks, {
+      FileSystemLoader: function (dir) {
+        this.getSource = (name) => { const k = dir + '/' + name; return k in disk ? { src: disk[k], path: name, noCache: true } : null; };
+      }
+    });
+    const modules = { fs, path: { join: (...p) => p.join('/'), basename: (p) => p.split('/').pop() }, nunjucks: nj, './helpers': HELPERS };
+    const req = (name) => modules[name];
+    req.main = null;
+    const mod = { exports: {} };
+    new Function('require', 'module', 'exports', '__dirname', RENDER_SRC)(req, mod, mod.exports, '.');
+    return {
+      api: mod.exports,
+      changes() {                                   // files render.js created or rewrote
+        const out = {};
+        for (const k in disk) {
+          if (!k.startsWith('./templates/') || k.endsWith('.tmp')) continue;
+          const n = k.slice('./templates/'.length);
+          if (files[n] !== disk[k]) out[n] = disk[k];
+        }
+        return out;
+      }
+    };
+  }
+
+  /* Real folders, through the File System Access API (Chrome and Edge) */
+  const canOpenFolder = typeof window.showDirectoryPicker === 'function';
+  async function readFolder(dir, prefix = '', depth = 0, out = {}) {
+    for await (const [name, handle] of dir.entries()) {
+      if (name.startsWith('.') || name === 'node_modules') continue;
+      if (handle.kind === 'directory') {
+        if (depth < 4) await readFolder(handle, prefix + name + '/', depth + 1, out);
+      } else if (/\.(njk|nunjucks|html|txt|md|json)$/i.test(name)) {
+        const file = await handle.getFile();
+        if (file.size <= 1024 * 1024) out[prefix + name] = await file.text();
+      }
+    }
+    return out;
+  }
+  async function folderOf(dir, relPath, create) {
+    const parts = relPath.split('/');
+    let d = dir;
+    for (const p of parts.slice(0, -1)) d = await d.getDirectoryHandle(p, { create });
+    return { d, name: parts[parts.length - 1] };
+  }
+  async function writeToFolder(dir, relPath, text) {
+    const { d, name } = await folderOf(dir, relPath, true);
+    const fh = await d.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(text);
+    await w.close();
+  }
+  async function removeFromFolder(dir, relPath) {
+    const { d, name } = await folderOf(dir, relPath, false);
+    await d.removeEntry(name);
+  }
+
+  function buildWorkspace(host, id, cfg) {
+    if (typeof nunjucks === 'undefined') {
+      host.innerHTML = '<div class="unavailable">The workspace needs the Nunjucks library, which did not load.</div>';
+      return;
+    }
+    const examples = () => JSON.parse(JSON.stringify(cfg.files));
+    const firstTemplate = (files) => Object.keys(files).sort().find((n) => !isJson(n)) || Object.keys(files)[0] || null;
+    function loadStored() {
+      if (!cfg.persist) return null;
+      try {
+        const s = JSON.parse(localStorage.getItem(cfg.persist) || 'null');
+        if (s && s.files && typeof s.files === 'object') return s;
+      } catch (e) {}
+      return null;
+    }
+    const stored = loadStored();
+    const ws = { files: stored ? stored.files : examples(), active: null, dir: null, view: 'text' };
+    ws.active = stored && stored.active in ws.files ? stored.active : (cfg.active in ws.files ? cfg.active : firstTemplate(ws.files));
+
+    const folderBtn = cfg.folder && canOpenFolder ? '<button type="button" class="btn sm" data-act="folder" id="' + id + '-folder">Open templates folder</button>' : '';
+    host.innerHTML =
+      '<div class="wsp-bar">' +
+        '<span class="wsp-new"><label class="sr-only" for="' + id + '-name">New file name</label>' +
+        '<input type="text" class="wsp-input" id="' + id + '-name" placeholder="new-template.njk" autocomplete="off" spellcheck="false">' +
+        '<button type="button" class="btn sm" data-act="create" id="' + id + '-create">Create</button></span>' +
+        '<button type="button" class="btn sm" data-act="init" id="' + id + '-init">Initialise files</button>' +
+        '<button type="button" class="btn sm" data-act="delete" id="' + id + '-delete">Delete file</button>' +
+        '<button type="button" class="btn sm" data-act="reset" id="' + id + '-reset">Reset examples</button>' +
+        folderBtn +
+      '</div>' +
+      '<p class="wsp-status" aria-live="polite"></p>' +
+      '<div class="wsp-main">' +
+        '<nav class="wsp-tree" aria-label="Files"></nav>' +
+        '<div class="pane wsp-edit">' +
+          '<div class="pane-head"><span class="pane-title wsp-filename"></span></div>' +
+          '<div class="slot-ed"></div>' +
+        '</div>' +
+        '<div class="pane wsp-output">' +
+          '<div class="pane-head"><span class="pane-title">Output</span><div class="tabs views">' +
+            '<button type="button" class="tab is-active" data-view="text">Text</button>' +
+            '<button type="button" class="tab" data-view="preview">Preview</button></div>' +
+            '<button type="button" class="btn sm" data-act="run" id="' + id + '-run">Render and save</button>' +
+          '</div>' +
+          '<pre class="out" aria-live="polite"></pre>' +
+          '<div class="preview" hidden></div>' +
+          '<p class="wsp-note">The output updates as you type, without saving. Render and save is a real run: it writes the state file.</p>' +
+        '</div>' +
+      '</div>';
+
+    const $ = (sel) => host.querySelector(sel);
+    const tree = $('.wsp-tree');
+    const statusEl = $('.wsp-status');
+    const outPre = $('.out');
+    const previewHost = $('.preview');
+    const shadow = previewHost.attachShadow({ mode: 'open' });
+    const nameInput = $('#' + id + '-name');
+    const deleteBtn = $('[data-act="delete"]');
+    const resetBtn = $('[data-act="reset"]');
+
+    function status(msg, isErr) {
+      statusEl.textContent = msg || '';
+      statusEl.classList.toggle('err', !!isErr);
+    }
+
+    const editor = makeEditor(id + '-ed', '', (v) => (ws.active && isJson(ws.active) ? hlJson(v) : hlNjk(v)), (v) => {
+      if (!ws.active) return;
+      ws.files[ws.active] = v;
+      changed(ws.active);
+      schedulePreview();
+    });
+    $('.slot-ed').appendChild(editor.el);
+    const textarea = editor.el.querySelector('textarea');
+
+    /* saving: browser storage, or the open folder */
+    let persistTimer = null;
+    function persistSoon() {
+      if (!cfg.persist || ws.dir) return;
+      clearTimeout(persistTimer);
+      persistTimer = setTimeout(() => {
+        try { localStorage.setItem(cfg.persist, JSON.stringify({ files: ws.files, active: ws.active })); }
+        catch (e) { status('Could not save in this browser: ' + e.message, true); }
+      }, 300);
+    }
+    const pendingDisk = new Map();
+    let diskTimer = null;
+    function queueDisk(name, removed) {
+      pendingDisk.set(name, removed ? 'remove' : 'write');
+      clearTimeout(diskTimer);
+      diskTimer = setTimeout(flushDisk, 400);
+    }
+    async function flushDisk() {
+      const dir = ws.dir;
+      if (!dir) return;
+      const jobs = [...pendingDisk];
+      pendingDisk.clear();
+      for (const [name, op] of jobs) {
+        try {
+          if (op === 'remove') await removeFromFolder(dir, name);
+          else if (name in ws.files) await writeToFolder(dir, name, ws.files[name]);
+        } catch (e) {
+          status('Could not save ' + name + ' to the folder: ' + e.message, true);
+          return;
+        }
+      }
+      status('Saved to the "' + dir.name + '" folder: ' + jobs.map((j) => j[0]).join(', '));
+    }
+    function changed(name, removed) {
+      persistSoon();
+      if (ws.dir) queueDisk(name, removed);
+    }
+
+    /* file list */
+    function templates() { return Object.keys(ws.files).filter((n) => !isJson(n)).sort(); }
+    function templateFor(name) {
+      if (!name) return null;
+      if (!isJson(name)) return name;
+      return templates().find((t) => { const c = companionNames(t); return c.data === name || c.state === name; }) || null;
+    }
+    function fileBtn(n, child) {
+      return '<button type="button" class="wsp-file' + (child ? ' child' : '') + (n === ws.active ? ' is-active' : '') +
+        '" data-file="' + escAttr(n) + '" title="' + escAttr(n) + '">' + esc(n) + '</button>';
+    }
+    function drawTree() {
+      const names = Object.keys(ws.files).sort();
+      const claimed = new Set();
+      const parts = [];
+      templates().forEach((t) => {
+        const c = companionNames(t);
+        parts.push(fileBtn(t, false));
+        [c.data, c.state].forEach((n) => { if (n in ws.files) { parts.push(fileBtn(n, true)); claimed.add(n); } });
+        if (!(c.data in ws.files) || !(c.state in ws.files)) {
+          parts.push('<button type="button" class="wsp-init" data-init="' + escAttr(t) + '">+ Initialise data and state</button>');
+        }
+      });
+      const others = names.filter((n) => isJson(n) && !claimed.has(n));
+      if (others.length) {
+        parts.push('<p class="wsp-group">Other files</p>');
+        others.forEach((n) => parts.push(fileBtn(n, false)));
+      }
+      if (!names.length) parts.push('<p class="wsp-empty">No files yet. Type a name above and click Create.</p>');
+      tree.innerHTML = parts.join('');
+    }
+    function select(name) {
+      ws.active = name in ws.files ? name : null;
+      editor.value = ws.active ? ws.files[ws.active] : '';
+      textarea.disabled = !ws.active;
+      $('.wsp-filename').textContent = ws.active || 'No file selected';
+      disarmDelete();
+      drawTree();
+      preview();
+      persistSoon();
+    }
+    tree.addEventListener('click', (e) => {
+      const f = e.target.closest('[data-file]');
+      if (f) { select(f.dataset.file); return; }
+      const i = e.target.closest('[data-init]');
+      if (i) initTemplate(i.dataset.init);
+    });
+
+    /* output */
+    function showOut(text, message, isErr) {
+      if (message !== undefined) {
+        outPre.className = 'out' + (isErr ? ' err' : ' muted');
+        outPre.textContent = message;
+        shadow.innerHTML = '';
+        return;
+      }
+      outPre.className = 'out';
+      outPre.innerHTML = hlOut(text.replace(/^\s*\n/, ''));
+      shadow.innerHTML = '<style>:host{display:block;font:15px/1.5 inherit} :host([hidden]){display:none} a{color:inherit} label{display:block;margin:6px 0}</style>' + text;
+    }
+    host.querySelectorAll('.tabs.views .tab').forEach((b) => b.addEventListener('click', () => {
+      ws.view = b.dataset.view;
+      host.querySelectorAll('.tabs.views .tab').forEach((x) => x.classList.toggle('is-active', x === b));
+      outPre.hidden = ws.view !== 'text';
+      previewHost.hidden = ws.view !== 'preview';
+    }));
+
+    function run(save) {
+      const t = templateFor(ws.active);
+      if (!t) {
+        showOut(null, ws.active ? ws.active + ' does not belong to a template, so there is nothing to render.' : 'Create a template to get started.');
+        return;
+      }
+      try {
+        const h = renderJsOn(ws.files);
+        const text = h.api.render(t);
+        showOut(text);
+        if (save) {
+          const saved = applyChanges(h.changes());
+          status('Rendered ' + t + ' and saved ' + (saved.join(', ') || 'nothing') + '.');
+        }
+      } catch (e) {
+        showOut(null, e.message || String(e), true);
+        if (save) status('Nothing saved: the render failed.', true);
+      }
+    }
+    let previewTimer = null;
+    function preview() { run(false); }
+    function schedulePreview() { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 150); }
+
+    function applyChanges(changes) {
+      const names = Object.keys(changes);
+      names.forEach((n) => { ws.files[n] = changes[n]; changed(n); });
+      if (ws.active && names.includes(ws.active)) editor.value = ws.files[ws.active];
+      drawTree();
+      return names;
+    }
+
+    /* actions */
+    function initTemplate(t) {
+      if (!t) { status('Select a template, or one of its files, first.', true); return; }
+      try {
+        const h = renderJsOn(ws.files);
+        const report = h.api.init(t);
+        applyChanges(h.changes());
+        status(h.api.describe(report).replace(/\n/g, '. ') + '.');
+        preview();
+      } catch (e) {
+        status('Could not initialise ' + t + ': ' + (e.message || e), true);
+      }
+    }
+    function createFile() {
+      let n = nameInput.value.trim().replace(/^\/+/, '');
+      if (!n) { status('Type a name first, such as welcome.njk.', true); nameInput.focus(); return; }
+      if (!/\.[a-z0-9]+$/i.test(n)) n += '.njk';
+      if (!/^[\w.-]+(\/[\w.-]+)*$/.test(n)) { status('Use letters, numbers, dots, dashes and underscores, with / for folders.', true); return; }
+      if (n in ws.files) { status(n + ' already exists.', true); return; }
+      ws.files[n] = isJson(n) ? '{}\n' : '{# ' + n + ' #}\nHello {{ name }}!\n';
+      changed(n);
+      nameInput.value = '';
+      select(n);
+      status(isJson(n) ? 'Created ' + n + '.' : 'Created ' + n + '. Initialise it to create ' + companionNames(n).data + ' and ' + companionNames(n).state + '.');
+    }
+    let deleteArmed = null;
+    function disarmDelete() { deleteArmed = null; deleteBtn.textContent = 'Delete file'; deleteBtn.classList.remove('danger'); }
+    function deleteFile() {
+      if (!ws.active) { status('Select a file to delete.', true); return; }
+      if (deleteArmed !== ws.active) {
+        deleteArmed = ws.active;
+        deleteBtn.textContent = 'Delete ' + ws.active + '?';
+        deleteBtn.classList.add('danger');
+        status('Click again to delete ' + ws.active + (ws.dir ? ' from the folder on disk' : '') + '.');
+        return;
+      }
+      const gone = ws.active;
+      delete ws.files[gone];
+      changed(gone, true);
+      select(firstTemplate(ws.files));
+      status('Deleted ' + gone + '.');
+    }
+    let resetArmed = false;
+    function resetExamples() {
+      if (cfg.persist && !resetArmed) {
+        resetArmed = true;
+        resetBtn.textContent = 'Replace all files?';
+        resetBtn.classList.add('danger');
+        status('Click again to replace every file in this workspace with the examples.');
+        setTimeout(() => { resetArmed = false; resetBtn.textContent = 'Reset examples'; resetBtn.classList.remove('danger'); }, 4000);
+        return;
+      }
+      resetArmed = false;
+      resetBtn.textContent = 'Reset examples';
+      resetBtn.classList.remove('danger');
+      ws.files = examples();
+      persistSoon();
+      select(cfg.active in ws.files ? cfg.active : firstTemplate(ws.files));
+      status('Restored the example files.');
+    }
+    async function toggleFolder() {
+      const btn = $('[data-act="folder"]');
+      if (ws.dir) {
+        ws.dir = null;
+        const s = loadStored();
+        ws.files = s ? s.files : examples();
+        btn.textContent = 'Open templates folder';
+        resetBtn.hidden = false;
+        select(s && s.active in ws.files ? s.active : firstTemplate(ws.files));
+        status('Closed the folder. Back to the files kept in this browser.');
+        return;
+      }
+      let dir;
+      try { dir = await window.showDirectoryPicker({ id: 'njk-templates', mode: 'readwrite' }); }
+      catch (e) { if (e.name !== 'AbortError') status('Could not open the folder: ' + e.message, true); return; }
+      try {
+        status('Reading ' + dir.name + '…');
+        const files = await readFolder(dir);
+        ws.dir = dir;
+        ws.files = files;
+        btn.textContent = 'Close folder';
+        resetBtn.hidden = true;
+        select(firstTemplate(files));
+        status('Working in the "' + dir.name + '" folder: ' + Object.keys(files).length + ' files. Changes save to disk as you type. Reopen the folder after reloading the page.');
+      } catch (e) {
+        status('Could not read the folder: ' + e.message, true);
+      }
+    }
+
+    host.querySelector('.wsp-bar').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-act]');
+      if (!b) return;
+      const act = b.dataset.act;
+      if (act === 'create') createFile();
+      else if (act === 'init') initTemplate(templateFor(ws.active));
+      else if (act === 'delete') deleteFile();
+      else if (act === 'reset') resetExamples();
+      else if (act === 'folder') toggleFolder();
+    });
+    $('[data-act="run"]').addEventListener('click', () => run(true));
+    nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); createFile(); } });
+
+    select(ws.active);
+    if (cfg.intro) status(cfg.intro + (cfg.folder && !canOpenFolder ? ' To work on a real folder, open this page in Chrome or Edge.' : ''));
+  }
+
+  const WSP = {
+    main: {
+      persist: 'njk-workbook-files',
+      folder: true,
+      active: 'invoice.njk',
+      intro: 'These files are kept in this browser.',
+      files: {
+        'invoice.njk':
+`{# A template with both companion files #}
+{
+  "invoice": "INV-{{ counter("invoice") | pad(4) }}",
+  "date": {{ now() | date("D MMMM YYYY") | dump }},
+  "bill_to": { "name": {{ client.name | dump }}, "city": {{ client.city | dump }} },
+  "items": {{ items | dump }},
+  "previous_invoice": "INV-{{ previous("invoice", 0) | pad(4) }}",
+  "last_run": {{ lastRun | date("D MMM YYYY [at] HH:mm", "never") | dump }}
+}
+`,
+        'invoice.data.json': JSON.stringify({
+          client: { name: 'Ada Lovelace', city: 'London' },
+          items: [{ name: 'Notebook', qty: 2, price: 4.5 }, { name: 'Pen', qty: 3, price: 1.25 }]
+        }, null, 2) + '\n',
+        'invoice.state.json': JSON.stringify({ invoice: 41 }, null, 2) + '\n',
+        'daily.njk':
+`{# No state file yet: the first Render and save creates it #}
+{
+  "topic": {{ rotate("topic", topics) | dump }},
+  "next_time": {{ upcoming("topic", topics) | dump }},
+  "greeting": {{ (rotate("greeting", toSet(greetings)) ~ ", " ~ name ~ "!") | dump }}
+}
+`,
+        'daily.data.json': JSON.stringify({
+          name: 'Ada',
+          topics: ['Filters', 'Loops', 'Macros', 'Inheritance'],
+          greetings: ['Hello', 'Hi', 'Hey', 'Hello']
+        }, null, 2) + '\n',
+        'welcome.njk':
+`{# No data or state file yet. Click "+ Initialise data and state" under it in the file list. #}
+{
+  "to": {{ person.first_name | dump }},
+  "team": {{ team | dump }},
+  "first_day": {{ start | date("dddd D MMMM", "to be confirmed") | dump }},
+  "tasks": {{ tasks | length }}
+}
+`
+      }
+    },
+    sections: {
+      active: 'letter.njk',
+      files: {
+        'letter.njk':
+`{#- A macro is a named section. It can use the template's data. -#}
+{%- macro clientSection() -%}
+Dear {{ client.name }},
+Thanks for your order. We will email {{ client.email }} when it ships.
+{%- endmacro -%}
+
+{%- macro addressSection() -%}
+To the occupant of {{ client.address.number }} {{ client.address.street }}, {{ client.address.city }}:
+Your parcel is on its way.
+{%- endmacro -%}
+
+{{ clientSection() if a + b == 2 else addressSection() }}
+
+{{ when(rush, "This order ships today.", "This order ships within 3 days.") }}
+{{ when(items | length > 2, "A bulk discount has been applied.") }}
+`,
+        'letter.data.json': JSON.stringify({
+          a: 1, b: 1, rush: false,
+          client: { name: 'Ada Lovelace', email: 'ada@example.com', address: { number: '10', street: 'Downing St', city: 'London' } },
+          items: [{ sku: 'A1', gift: true }, { sku: 'B2', gift: false }]
+        }, null, 2) + '\n',
+        'address.njk':
+`{#- A helper template. Other templates use its JSON through jsonFromFile("address.njk"). -#}
+{{ json({
+  "streetAddress": {
+    "streetName": client.address.street,
+    "streetNumber": client.address.number
+  },
+  "city": client.address.city,
+  "label": client.name ~ ", " ~ client.address.city
+}) }}
+`,
+        'order.njk':
+`{#- Each section is an object: built here, or taken from a helper template -#}
+{%- set clientSection = { "name": client.name, "email": client.email } -%}
+{%- set addressSection = jsonFromFile("address.njk") -%}
+{%- set isClient = a + b == 2 -%}
+{{ json({
+  "order": counter("order"),
+  "client": when(isClient, clientSection),
+  "address": when(not isClient, addressSection),
+  "contact": when(isClient, client.email, jsonFromFile("address.njk", "label")),
+  "door": jsonFromFile("address.njk", "streetAddress.streetNumber"),
+  "gifts": items | selectattr("gift"),
+  "flags": [when(rush, "rush"), "standard", when(items | length > 2, "bulk")],
+  "total": total
+}) }}
+`,
+        'order.data.json': JSON.stringify({
+          a: 1, b: 1, rush: true, total: 13.75,
+          client: { name: 'Ada Lovelace', email: 'ada@example.com', address: { number: '10', street: 'Downing St', city: 'London' } },
+          items: [{ sku: 'A1', gift: true }, { sku: 'B2', gift: false }]
+        }, null, 2) + '\n'
+      }
+    },
+    counters: {
+      active: 'invoice.njk',
+      files: {
+        'invoice.njk':
+`{# Each helper gives one value per run. Use it as often as you like. #}
+Invoice INV-{{ counter("invoice") | pad(4) }}
+Bill to: {{ client.name }}
+
+{% for item in items %}
+{{ loop.index }}. {{ item.name }}  {{ item.qty }} x {{ item.price }}  (INV-{{ counter("invoice") | pad(4) }})
+{% endfor %}
+
+Line items billed so far: {{ counter("lineItems", items | length) }}
+Previous invoice: INV-{{ previous("invoice", 0) | pad(4) }}
+Previous run: {{ lastRun | date("D MMM YYYY [at] HH:mm:ss", "never") }}
+`,
+        'invoice.data.json': JSON.stringify({
+          client: { name: 'Ada Lovelace' },
+          items: [{ name: 'Notebook', qty: 2, price: 4.5 }, { name: 'Pen', qty: 3, price: 1.25 }]
+        }, null, 2) + '\n',
+        'invoice.state.json': JSON.stringify({ invoice: 41, lineItems: 120 }, null, 2) + '\n'
+      }
+    },
+    rotate: {
+      active: 'daily.njk',
+      files: {
+        'daily.njk':
+`{# rotate() gives this run's item. The next run gets the next one. #}
+Today's topic: {{ rotate("topic", topics) }}
+Reminder: today is all about {{ rotate("topic", topics) | lower }}.
+Coming up next time: {{ upcoming("topic", topics) }}
+
+{# A Set works too. The duplicate "Hello" is dropped, so this rotates 3 greetings. #}
+{{ rotate("greeting", toSet(greetings)) }}, {{ name }}!
+
+{% if firstTime("readers", name) %}Welcome, first-time reader!{% else %}Welcome back.{% endif %}
+`,
+        'daily.data.json': JSON.stringify({
+          name: 'Ada',
+          topics: ['Filters', 'Loops', 'Macros', 'Inheritance'],
+          greetings: ['Hello', 'Hi', 'Hey', 'Hello']
+        }, null, 2) + '\n'
+      }
+    }
+  };
+
+  document.querySelectorAll('.wsp').forEach((host) => {
+    buildWorkspace(host, 'wsp-' + host.dataset.wsp, WSP[host.dataset.wsp]);
+  });
+
+  /* ---------- live examples: a few files, run one or more times in a row ---------- */
+  function compactJson(text) {
+    try {
+      const o = JSON.parse(text);
+      if (o && typeof o === 'object' && 'lastRun' in o) o.lastRun = '…';
+      return JSON.stringify(o).replace(/,"/g, ', "').replace(/":/g, '": ');
+    } catch (e) { return String(text || '').trim(); }
+  }
+
+  function buildExample(host, id, cfg) {
+    if (typeof nunjucks === 'undefined') {
+      host.innerHTML = '<div class="unavailable">The live example needs the Nunjucks library, which did not load.</div>';
+      return;
+    }
+    const original = () => {
+      const f = {};
+      for (const n in cfg.files) f[n] = typeof cfg.files[n] === 'string' ? cfg.files[n] : JSON.stringify(cfg.files[n], null, 2) + '\n';
+      return f;
+    };
+    let files = original();
+    const names = Object.keys(files);
+    let active = cfg.main;
+    const runs = cfg.runs || 1;
+    const stateName = companionNames(cfg.main).state;
+
+    host.innerHTML =
+      '<div class="ex-files">' +
+        '<div class="pane-head"><div class="tabs" role="tablist"></div>' +
+        '<button type="button" class="btn sm" id="' + id + '-reset">Reset</button></div>' +
+        '<div class="slot-ed"></div>' +
+      '</div>' +
+      '<div class="ex-runs"></div>';
+    const tabs = host.querySelector('.tabs');
+    const runsEl = host.querySelector('.ex-runs');
+    const editor = makeEditor(id + '-ed', files[active], (v) => (isJson(active) ? hlJson(v) : hlNjk(v)), (v) => {
+      files[active] = v;
+      schedule();
+    });
+    host.querySelector('.slot-ed').appendChild(editor.el);
+
+    function drawTabs() {
+      tabs.innerHTML = names.map((n) => '<button type="button" class="tab' + (n === active ? ' is-active' : '') +
+        '" data-file="' + escAttr(n) + '">' + esc(n) + '</button>').join('');
+    }
+    tabs.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-file]');
+      if (!b) return;
+      active = b.dataset.file;
+      editor.value = files[active];
+      drawTabs();
+    });
+    host.querySelector('#' + id + '-reset').addEventListener('click', () => {
+      files = original();
+      editor.value = files[active];
+      run();
+    });
+    let timer = null;
+    function schedule() { clearTimeout(timer); timer = setTimeout(run, 150); }
+
+    function run() {
+      let disk = Object.assign({}, files);
+      const startState = disk[stateName];
+      const cards = [];
+      for (let i = 1; i <= runs; i++) {
+        try {
+          const h = renderJsOn(disk);
+          const flags = (cfg.runFlags || [])[i - 1] || '';
+          const out = h.api.render(cfg.main, {}, flags ? h.api.parseArgs(flags.split(' ')).opts : {});
+          disk = Object.assign(disk, h.changes());
+          cards.push({ out: out.replace(/^\s*\n/, '').replace(/\s+$/, ''), state: disk[stateName], flags });
+        } catch (e) {
+          cards.push({ err: e.message || String(e) });
+          break;
+        }
+      }
+      const many = runs > 1;
+      runsEl.className = 'ex-runs' + (many ? ' many' : '');
+      runsEl.innerHTML =
+        (many ? '<p class="ex-start">State file before run 1: ' + (startState ? '<code>' + hlOut(compactJson(startState)) + '</code>' : 'none yet') + '</p>' : '') +
+        '<div class="ex-cards">' + cards.map((c, i) =>
+          '<div class="run"><p class="pane-title">' + (many ? 'Run ' + (i + 1) + (c.flags ? ' · <span class="run-flags">' + esc(c.flags) + '</span>' : '') : 'Output') + '</p>' +
+          (c.err
+            ? '<pre class="out err">' + esc(c.err) + '</pre>'
+            : '<pre class="out">' + hlOut(c.out) + '</pre>' +
+              (many ? '<p class="run-state">State file after: <code>' + hlOut(compactJson(c.state)) + '</code></p>' : '')) +
+          '</div>').join('') + '</div>';
+    }
+    drawTabs();
+    run();
+  }
+
+  const EX = {
+    counter: {
+      main: 'invoice.njk', runs: 3,
+      files: {
+        'invoice.njk':
+`{
+  "invoice": "INV-{{ counter("invoice") | pad(4) }}",
+  "same_number_again": {{ counter("invoice") }},
+  "items_billed_so_far": {{ counter("billed", items | length) }}
+}
+`,
+        'invoice.data.json': { items: ['Notebook', 'Pen'] },
+        'invoice.state.json': { invoice: 41 }
+      }
+    },
+    rotate: {
+      main: 'daily.njk', runs: 4,
+      files: {
+        'daily.njk':
+`{
+  "topic": {{ rotate("topic", topics) | dump }},
+  "next_time": {{ upcoming("topic", topics) | dump }}
+}
+`,
+        'daily.data.json': { topics: ['Filters', 'Loops', 'Macros'] }
+      }
+    },
+    firstTime: {
+      main: 'greeting.njk', runs: 3,
+      files: {
+        'greeting.njk':
+`{
+  "name": {{ name | dump }},
+  "first_visit": {{ firstTime("welcomed", name) }},
+{%- if firstTime("welcomed", name) %}
+  "message": {{ ("Welcome, " ~ name ~ "!") | dump }}
+{%- else %}
+  "message": {{ ("Welcome back, " ~ name ~ ".") | dump }}
+{%- endif %}
+}
+`,
+        'greeting.data.json': { name: 'Ada' }
+      }
+    },
+    previous: {
+      main: 'invoice.njk', runs: 3,
+      files: {
+        'invoice.njk':
+`{
+  "invoice": {{ counter("invoice") }},
+  "previous_invoice": {{ previous("invoice", "none yet") | dump }},
+  "last_run": {{ lastRun | date("D MMM YYYY [at] HH:mm:ss", "never") | dump }}
+}
+`,
+        'invoice.data.json': {}
+      }
+    },
+    reset: {
+      main: 'steps.njk', runs: 4,
+      files: {
+        'steps.njk':
+`{%- if counter("step") == 3 %}{{ reset("step") }}{% endif -%}
+{
+  "step": {{ counter("step") }},
+  "of": 3,
+  "starting_over_next_run": {{ counter("step") == 3 }}
+}
+`,
+        'steps.data.json': {}
+      }
+    },
+    hold: {
+      main: 'daily.njk', runs: 5, runFlags: ['', '', '--hold topic', '--reverse topic', '--dry-run'],
+      files: {
+        'daily.njk':
+`{
+  "day": {{ counter("day") }},
+  "topic": {{ rotate("topic", topics) | dump }}
+}
+`,
+        'daily.data.json': { topics: ['Filters', 'Loops', 'Macros'] }
+      }
+    },
+    remember: {
+      main: 'notes.njk', runs: 3,
+      files: {
+        'notes.njk':
+`{{- remember("message", "hello from run " ~ counter("run")) -}}
+{
+  "this_run": {{ counter("run") }},
+  "message_from_last_run": {{ previous("message", "none") | dump }}
+}
+`,
+        'notes.data.json': {}
+      }
+    },
+    dates: {
+      main: 'dates.njk',
+      files: {
+        'dates.njk':
+`{
+  "now": {{ now() | date("dddd D MMMM YYYY, HH:mm") | dump }},
+  "now_as_stored": {{ now() | dump }},
+  "launch": {{ launch | date("D MMM YYYY [at] h:mm A") | dump }},
+  "a_fixed_date": {{ datetime("2027-01-01") | date("dddd D MMMM") | dump }},
+  "a_month_on": {{ deadline | dateAdd(1, "month") | date | dump }},
+  "days_to_go": {{ daysBetween(now(), launch) }},
+  "reminder": {{ reminder | date("D MMM", "not set") | dump }},
+  "deadline_passed": {{ datetime(deadline) < now() }}
+}
+`,
+        'dates.data.json': { launch: '2026-12-25T18:30', deadline: '2027-01-31', reminder: '' }
+      }
+    },
+    sets: {
+      main: 'tags.njk',
+      files: {
+        'tags.njk':
+`{%- set tags = toSet(post.tags) -%}
+{
+  "tags_in_data": {{ post.tags | length }},
+  "different_tags": {{ tags.size }},
+  "tags": {{ tags | array | dump }},
+  "sorted": {{ tags | array | sort | dump }},
+  "has_node": {{ tags.has("node") }},
+  "authors": {{ post.authors | unique | dump }}
+}
+`,
+        'tags.data.json': { post: { tags: ['nunjucks', 'node', 'templates', 'node', 'nunjucks'], authors: ['Ada', 'Grace', 'Ada'] } }
+      }
+    },
+    byHand: {
+      main: 'order.njk',
+      files: {
+        'order.njk':
+`{
+  "order": {{ number | dump }},
+  "customer": {{ client.name | dump }},
+  "items": {{ items | dump }},
+  "total": {{ total }},
+  "paid": {{ paid }}
+{%- if rush %},
+  "rush": true
+{%- endif %}
+{%- if client.email %},
+  "contact": {{ client.email | dump }}
+{%- endif %}
+}
+`,
+        'order.data.json': { number: 'A-17', paid: false, rush: false, total: 13.75, items: ['Notebook', 'Pen'], client: { name: 'Ada "the countess" Lovelace', email: 'ada@example.com' } }
+      }
+    },
+    jsonFromFile: {
+      main: 'shipping.njk',
+      files: {
+        'shipping.njk':
+`{
+  "label": {{ jsonFromFile("address.njk", "label") | dump }},
+  "street_number": {{ jsonFromFile("address.njk", "street.number") | dump }},
+  "address": {{ jsonFromFile("address.njk") | dump }},
+  "first_box": {{ jsonFromFile("boxes.json", "[0].size") | dump }},
+  "box_count": {{ jsonFromFile("boxes.json") | length }}
+}
+`,
+        'shipping.data.json': { client: { name: 'Ada Lovelace', address: { number: '10', street: 'Downing St', city: 'London' } } },
+        'address.njk':
+`{
+  "label": {{ (client.name ~ ", " ~ client.address.city) | dump }},
+  "street": {
+    "number": {{ client.address.number | dump }},
+    "name": {{ client.address.street | dump }}
+  },
+  "city": {{ client.address.city | dump }}
+}
+`,
+        'boxes.json': [{ size: 'small', weight: 1 }, { size: 'large', weight: 4 }]
+      }
+    },
+    shortcut: {
+      main: 'order.njk',
+      files: {
+        'order.njk':
+`{{ json({
+  "order": number,
+  "rush": when(rush, true),
+  "contact": when(client.email, client.email, "no email given"),
+  "flags": ["standard", when(gift, "gift wrap"), when(rush, "express")],
+  "total": total
+}) }}
+`,
+        'order.data.json': { number: 'A-17', rush: false, gift: true, client: { email: 'ada@example.com' }, total: 13.75 }
+      }
+    },
+    sections: {
+      main: 'letter.njk',
+      files: {
+        'letter.njk':
+`{%- macro clientSection() %}{
+    "greeting": {{ ("Dear " ~ client.name) | dump }},
+    "message": "Thanks for your order."
+  }{% endmacro -%}
+
+{%- macro addressSection() %}{
+    "greeting": {{ ("To the occupant of " ~ client.address) | dump }},
+    "message": "Your parcel is on its way."
+  }{% endmacro -%}
+
+{
+  "letter": {{ clientSection() if a + b == 2 else addressSection() }}
+}
+`,
+        'letter.data.json': { a: 1, b: 1, client: { name: 'Ada Lovelace', address: '10 Downing St, London' } }
+      }
+    },
+    optionalJson: {
+      main: 'order.njk',
+      files: {
+        'order.njk':
+`{
+  "order": {{ number | dump }}
+{%- if showClient %},
+  "client": {
+    "name": {{ client.name | dump }},
+    "email": {{ client.email | dump }}
+  }
+{%- endif %}
+{%- if showAddress %},
+  "address": {
+    "street": {{ client.street | dump }},
+    "city": {{ client.city | dump }}
+  }
+{%- endif %},
+  "total": {{ total }}
+}
+`,
+        'order.data.json': { number: 'A-17', showClient: true, showAddress: false, total: 13.75, client: { name: 'Ada Lovelace', email: 'ada@example.com', street: '10 Downing St', city: 'London' } }
+      }
+    },
+    loopLines: {
+      main: 'order.njk',
+      files: {
+        'order.njk':
+`{
+  "order": {{ number | dump }},
+  "lines": [
+{%- for item in items %}
+    {{ jsonFromFile("line.njk", { "item": item }) | dump }}{{ "," if not loop.last }}
+{%- endfor %}
+  ],
+  "count": {{ items | length }}
+}
+`,
+        'order.data.json': { number: 'A-17', items: [{ sku: 'NB-01', name: 'Notebook', qty: 2, price: 4.5 }, { sku: 'PN-07', name: 'Pen', qty: 3, price: 1.25 }] },
+        'line.njk':
+`{
+  "sku": {{ item.sku | dump }},
+  "description": {{ (item.name ~ " x" ~ item.qty) | dump }},
+  "subtotal": {{ item.qty * item.price }}
+}
+`
+      }
+    },
+    daily: {
+      main: 'daily.njk', runs: 3,
+      files: {
+        'daily.njk':
+`{
+  "date": {{ now() | date("dddd D MMMM") | dump }},
+{%- if firstTime("readers", name) %}
+  "greeting": {{ ("Welcome, " ~ name ~ "!") | dump }},
+{%- else %}
+  "greeting": {{ ("Good to see you again, " ~ name ~ ".") | dump }},
+{%- endif %}
+  "tip": {{ rotate("tip", tips) | dump }},
+  "tomorrow": {{ upcoming("tip", tips) | dump }}
+}
+`,
+        'daily.data.json': { name: 'Ada', tips: ['Use | pad for numbers', 'Use | dump for text and lists', 'Put the comma inside {% if %}'] }
+      }
+    }
+  };
+
+  document.querySelectorAll('.ex').forEach((host) => {
+    buildExample(host, 'ex-' + host.dataset.ex, EX[host.dataset.ex]);
+  });
+
+  document.querySelectorAll('.pg').forEach((host) => {
+    const id = 'pg-' + host.dataset.pg;
+    buildPlayground(host, id, PG[host.dataset.pg]);
+  });
+
+  /* ---------- progress (per-browser convenience) ---------- */
+  const KEY = 'njk-workbook-done';
+  let done = new Set();
+  try { done = new Set(JSON.parse(localStorage.getItem(KEY) || '[]')); } catch (e) {}
+  const total = document.querySelectorAll('[data-done]').length;
+  function paintProgress() {
+    document.querySelectorAll('[data-done]').forEach((cb) => { cb.checked = done.has(cb.dataset.done); });
+    document.querySelectorAll('#index a[data-lesson]').forEach((a) => a.classList.toggle('is-done', done.has(a.dataset.lesson)));
+    document.getElementById('progress-count').textContent = done.size + ' / ' + total;
+    document.getElementById('progress-fill').style.width = (100 * done.size / total) + '%';
+  }
+  document.querySelectorAll('[data-done]').forEach((cb) => cb.addEventListener('change', () => {
+    if (cb.checked) done.add(cb.dataset.done); else done.delete(cb.dataset.done);
+    try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch (e) {}
+    paintProgress();
+  }));
+  paintProgress();
+
+  /* ---------- active lesson in the index ---------- */
+  const sections = [...document.querySelectorAll('.lesson')];
+  const links = new Map([...document.querySelectorAll('#index a')].map((a) => [a.getAttribute('href').slice(1), a]));
+  let ticking = false;
+  function markActive() {
+    ticking = false;
+    const probe = window.innerHeight * 0.3;
+    let current = sections[0];
+    for (const s of sections) { if (s.getBoundingClientRect().top <= probe) current = s; }
+    links.forEach((a, id) => a.classList.toggle('is-active', id === current.id));
+    const active = links.get(current.id);
+    if (active && window.innerWidth < 900) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+  window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(markActive); } }, { passive: true });
+  markActive();
+})();
+</script>
+</body>
+</html>
