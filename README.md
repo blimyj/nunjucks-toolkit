@@ -98,23 +98,25 @@ Each template has two companion files next to it:
 `node render.js init letter.njk` creates the data and state files for a new template,
 with every value the template uses left blank. It never overwrites anything.
 
-### Sharing a key between templates
+### Sharing a counter between templates
 
-A key is saved in the template's own state file unless its data file sends it to a shared
-state file by name:
+Two templates can count from the same number. Give the key a shared name in each data file:
 
-```json
-{
-  "$state": { "invoice": "billing" },
-  "client": { "name": "Ada Lovelace" }
-}
+```
+templates/a.njk and templates/b.njk         { "ticket": {{ counter("ticket") }} }
+templates/a.data.json and b.data.json       { "$state": { "ticket": "shared" } }
 ```
 
-Put the same line in `invoice.data.json` and `receipt.data.json`, and `counter("invoice")` in
-both templates draws from one sequence kept in `templates/billing.state.json`. Their other keys
-stay in their own state files, and so does `lastRun`. Keys starting with `$` are settings, so the
-template does not see them. `--hold invoice` works as before, `init` creates a missing shared
-state file, and a failed `send.js` puts back every state file the run changed.
+```sh
+node render.js a.njk     # { "ticket": 1 }
+node render.js b.njk     # { "ticket": 2 }   carries on from a.njk
+node render.js a.njk     # { "ticket": 3 }
+```
+
+The number is kept in `templates/shared.state.json`. Without the `"$state"` line, each template
+would count 1, 2, 3 on its own. Only the keys you list are shared; every other key, and `lastRun`,
+stays in the template's own state file. `--hold ticket` works as usual, and `init` creates the
+shared file if it is missing.
 
 ### Values and functions in the data file
 
