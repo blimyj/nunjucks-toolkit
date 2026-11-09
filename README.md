@@ -116,6 +116,39 @@ stay in their own state files, and so does `lastRun`. Keys starting with `$` are
 template does not see them. `--hold invoice` works as before, `init` creates a missing shared
 state file, and a failed `send.js` puts back every state file the run changed.
 
+### Values and functions in the data file
+
+`$let` holds named values and `$fn` named functions. Both are written as Nunjucks expressions,
+which is whatever you would put inside `{{ }}`, so you build them once and use them anywhere:
+
+```json
+{
+  "client": { "name": "ada lovelace" },
+  "items": [{ "name": "Pen", "price": 1.25 }],
+  "$let": {
+    "billTo": "client.name | title",
+    "total": "items | sum('price')",
+    "ref": "'INV-' ~ (counter('invoice') | pad(4))"
+  },
+  "$fn": {
+    "money(n, cur='USD')": "(n | round(2)) ~ ' ' ~ cur"
+  }
+}
+```
+
+```
+{ "ref": {{ ref | dump }}, "to": {{ billTo | dump }}, "total": {{ money(total) | dump }},
+  "eur": {{ money(total * 0.92, cur="EUR") | dump }}, "again": {{ ref | dump }} }
+```
+
+- `$let` values are worked out once per run, in order, so a later one can use an earlier one.
+  They keep their type, so a number stays a number. `ref` above counts once even though it is used twice.
+- A `$fn` key gives the name and arguments, with `=` for a default. A function can use the data,
+  every `$let` value and the other functions.
+- Names can't repeat a data value or a helper's name. A `$let` that comes out undefined (usually a
+  misspelt name) stops the run and says which one.
+- `| dump` is only needed to put text into JSON, because it adds the quotes. Numbers go in as they are.
+
 ## Running
 
 ```sh

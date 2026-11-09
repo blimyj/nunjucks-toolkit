@@ -29,7 +29,7 @@ function readJson(file) {
 }
 
 // Keys starting with $ in a data file are settings for render.js, not values for the template.
-const SETTINGS = ['$state'];
+const SETTINGS = ['$state', '$let', '$fn'];
 function splitData(data, dataFile) {
   const settings = {};
   const vars = {};
@@ -262,6 +262,115 @@ for (const [name, fn] of Object.entries({ counter, rotate, upcoming, firstTime, 
 // 42 | pad(4)  ->  "0042"
 env.addFilter('pad', (n, width = 4) => String(n).padStart(width, '0'));
 
+// Values and functions a data file builds once, for the template to use in as many places as it likes.
+//   "$let": { "total": "items | sum('price')" }                     {{ total }}
+//   "$fn":  { "money(n, cur='USD')": "(n | round(2)) ~ ' ' ~ cur" }  {{ money(total) }}  {{ money(4, "EUR") }}
+// Each one is a Nunjucks expression: what you would write inside {{ }}. $let values are worked out
+// once per run, in the order written, so a later one can use an earlier one; they keep their type,
+// so a number stays a number and a list stays a list. $fn bodies run each time they are called and
+// can use the data, every $let value and the other functions.
+let captured; // the value of the expression evaluate() is working on
+env.addGlobal('__value', (value) => { captured = value; return ''; });
+const compiled = new Map();
+function evaluate(expr, vars, where) {
+  let template = compiled.get(expr);
+  if (!template) {
+    try {
+      template = new nunjucks.Template('{{ __value(' + expr + ') }}', env, null, true);
+    } catch (err) {
+      throw new Error(`${where}: ${JSON.stringify(expr)} is not a valid expression (${err.message.split('\n').pop().trim()})`);
+    }
+    compiled.set(expr, template);
+  }
+  captured = undefined;
+  try {
+    template.render(vars);
+  } catch (err) {
+    throw new Error(`${where}: ${err.message.replace(/^\(unknown path\)\s*(\[Line \d+, Column \d+\])?\s*(Error:\s*)?/, '').trim()}`);
+  }
+  // Inner evaluations finish before this expression's own __value() runs, so `captured` is ours.
+  if (captured === undefined) throw new Error(`${where}: ${JSON.stringify(expr)} gives nothing (undefined). Check the names in it`);
+  return captured;
+}
+
+// Split "n, cur='USD', opts={a: 1, b: 2}" at the commas that are not inside quotes or brackets.
+function splitArgs(text) {
+  const parts = [];
+  let depth = 0;
+  let quote = null;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quote) { if (c === '\\') i++; else if (c === quote) quote = null; }
+    else if (c === '"' || c === "'") quote = c;
+    else if ('([{'.includes(c)) depth++;
+    else if (')]}'.includes(c)) depth--;
+    else if (c === ',' && depth === 0) { parts.push(text.slice(start, i)); start = i + 1; }
+  }
+  parts.push(text.slice(start));
+  return parts.map((p) => p.trim()).filter(Boolean);
+}
+
+// "money(n, cur='USD')"  ->  { name: "money", params: [{ name: "n" }, { name: "cur", fallback: "'USD'" }] }
+function parseSignature(signature, where) {
+  const m = signature.match(/^\s*([A-Za-z_]\w*)\s*\(([\s\S]*)\)\s*$/);
+  if (!m) throw new Error(`${where}: "${signature}" should look like name(arg, other='default')`);
+  const params = splitArgs(m[2]).map((part) => {
+    const p = part.match(/^([A-Za-z_]\w*)\s*(?:=\s*([\s\S]+))?$/);
+    if (!p) throw new Error(`${where}: "${part}" in "${signature}" should be a name, or name=default`);
+    return { name: p[1], fallback: p[2] };
+  });
+  return { name: m[1], params };
+}
+
+// Add the data file's $fn functions and $let values to `vars`, the template's variables.
+function addDerived(settings, vars, dataFile) {
+  const file = path.basename(dataFile);
+  const lets = settings.$let ?? {};
+  const fns = settings.$fn ?? {};
+  for (const [kind, group] of [['$let', lets], ['$fn', fns]]) {
+    if (typeof group !== 'object' || group === null || Array.isArray(group)) {
+      throw new Error(`${file}: "${kind}" should be an object of names and expressions`);
+    }
+    for (const [key, expr] of Object.entries(group)) {
+      if (typeof expr !== 'string') throw new Error(`${file}: ${kind} "${key}" should be an expression in a string`);
+    }
+  }
+  const claim = (name, what) => {
+    if (name in vars) throw new Error(`${file}: ${what} "${name}" has the same name as a value in the data`);
+    if (name in env.globals) throw new Error(`${file}: ${what} "${name}" has the same name as a helper`);
+  };
+
+  for (const [signature, body] of Object.entries(fns)) {
+    const where = `${file}: $fn "${signature}"`;
+    const { name, params } = parseSignature(signature, where);
+    claim(name, '$fn');
+    vars[name] = (...args) => {
+      // Nunjucks passes name=value arguments as a last object marked __keywords
+      const last = args[args.length - 1];
+      const named = last && typeof last === 'object' && last.__keywords ? args.pop() : {};
+      if (args.length > params.length) throw new Error(`${name}() takes ${params.length} argument(s) but got ${args.length}`);
+      for (const key of Object.keys(named)) {
+        if (key !== '__keywords' && !params.some((p) => p.name === key)) throw new Error(`${name}() has no argument called "${key}"`);
+      }
+      const scope = { ...vars };
+      params.forEach((p, i) => {
+        if (i < args.length) scope[p.name] = args[i];
+        else if (p.name in named) scope[p.name] = named[p.name];
+        else if (p.fallback !== undefined) scope[p.name] = evaluate(p.fallback, scope, `${where}, default for ${p.name}`);
+        else throw new Error(`${name}() is missing its "${p.name}" argument`);
+      });
+      return evaluate(body, scope, where);
+    };
+  }
+  for (const [name, expr] of Object.entries(lets)) {
+    if (!/^[A-Za-z_]\w*$/.test(name)) throw new Error(`${file}: $let "${name}" is not a usable name: use letters, digits and _`);
+    claim(name, '$let');
+    vars[name] = evaluate(expr, vars, `${file}: $let "${name}"`);
+  }
+  return vars;
+}
+
 // Render a template with its data file, then save its state file.
 // `extra` adds values JSON cannot hold, such as a Set or a Map, for this run only.
 // `opts` chooses what moves on:
@@ -290,7 +399,8 @@ function render(templateName, extra = {}, opts = {}) {
   inProgress.length = 0;
   inProgress.push(templateName);
   // Every template also gets `lastRun`: when it was last rendered successfully, or null.
-  const output = env.render(templateName, { lastRun: state.lastRun ?? null, ...data, ...extra });
+  const vars = addDerived(settings, { lastRun: state.lastRun ?? null, ...data, ...extra }, files.data);
+  const output = env.render(templateName, vars);
 
   Object.assign(state, afterRun);
   if (!(opts.hold || []).includes('lastRun')) state.lastRun = new Date();
@@ -479,6 +589,27 @@ function inferData(templateName) {
     }
     if (node instanceof nodes.Block) { walk(node.body, scope); return; }
     node.iterFields((value) => walk(value, scope));
+  }
+
+  // The data file's own $let and $fn expressions read data too. Their names are not data.
+  const dataFile = companions(templateName).data;
+  const derived = [];                                  // [expression, scope] pairs to read
+  if (fs.existsSync(dataFile)) {
+    const { settings } = splitData(readJson(dataFile), dataFile);
+    for (const name of Object.keys(settings.$let ?? {})) { defined.add(name); derived.push([settings.$let[name], Object.create(null)]); }
+    for (const [signature, body] of Object.entries(settings.$fn ?? {})) {
+      const { name, params } = parseSignature(signature, path.basename(dataFile));
+      defined.add(name);
+      const scope = Object.create(null);
+      for (const p of params) {
+        if (p.fallback !== undefined) derived.push([p.fallback, Object.create(null)]);
+        scope[p.name] = null;
+      }
+      derived.push([body, scope]);
+    }
+  }
+  for (const [expr, scope] of derived) {
+    try { walk(parser.parse('{{ ' + expr + ' }}', [], env.opts), scope); } catch (err) { /* render reports bad expressions */ }
   }
 
   readTemplate(templateName, Object.create(null));
