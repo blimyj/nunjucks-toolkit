@@ -129,36 +129,47 @@ state file. `--hold orderNumber` works as usual, and `init` creates the shared f
 
 ### Values and functions in the data file
 
-`$let` holds named values and `$fn` named functions. Both are written as Nunjucks expressions,
-which is whatever you would put inside `{{ }}`, so you build them once and use them anywhere:
+Write a value (`$let`) or a function (`$fn`) once in the data file, then use it as often as you
+like in the template.
 
 ```json
+// templates/welcome.data.json
 {
-  "client": { "name": "ada lovelace" },
-  "items": [{ "name": "Pen", "price": 1.25 }],
-  "$let": {
-    "billTo": "client.name | title",
-    "total": "items | sum('price')",
-    "ref": "'INV-' ~ (counter('invoice') | pad(4))"
-  },
-  "$fn": {
-    "money(n, cur='USD')": "(n | round(2)) ~ ' ' ~ cur"
-  }
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "$let": { "fullName": "firstName ~ ' ' ~ lastName" },
+  "$fn":  { "greet(who)": "'Hello, ' ~ who" }
 }
 ```
 
 ```
-{ "ref": {{ ref | dump }}, "to": {{ billTo | dump }}, "total": {{ money(total) | dump }},
-  "eur": {{ money(total * 0.92, cur="EUR") | dump }}, "again": {{ ref | dump }} }
+{# templates/welcome.njk #}
+{
+  "to": {{ fullName | dump }},
+  "subject": {{ greet(fullName) | dump }},
+  "sign_off": {{ greet("team") | dump }}
+}
 ```
 
-- `$let` values are worked out once per run, in order, so a later one can use an earlier one.
-  They keep their type, so a number stays a number. `ref` above counts once even though it is used twice.
-- A `$fn` key gives the name and arguments, with `=` for a default. A function can use the data,
-  every `$let` value and the other functions.
-- Names can't repeat a data value or a helper's name. A `$let` that comes out undefined (usually a
-  misspelt name) stops the run and says which one.
-- `| dump` is only needed to put text into JSON, because it adds the quotes. Numbers go in as they are.
+`node render.js welcome.njk` gives:
+
+```json
+{
+  "to": "Ada Lovelace",
+  "subject": "Hello, Ada Lovelace",
+  "sign_off": "Hello, team"
+}
+```
+
+- `fullName` is built once from `firstName` and `lastName`, then used twice.
+- `greet(who)` is a function: the key gives its name and arguments, the value is what it returns.
+  `~` joins text.
+- Both are written the way you would write inside `{{ }}`, so filters and helpers work too. An
+  argument can have a default: `greet(who, word='Hello')`.
+- A `$let` value is worked out once per run, so one that calls `counter()` gives the same number
+  everywhere it is used.
+- A name can't repeat a data value or a helper, and a misspelt name stops the run and says which entry.
+- `| dump` is only needed to put text into JSON, because it adds the quotes.
 
 ## Running
 

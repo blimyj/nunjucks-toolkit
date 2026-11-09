@@ -606,32 +606,32 @@ node render.js email.njk     # { "email_ref": 3 }</code></pre>
 
   <article class="helper" id="h-derived">
     <h3 class="sig">Build once, use anywhere: <code>"$let"</code> and <code>"$fn"</code></h3>
-    <p class="what">Values and functions written in the data file, so the template can use them in as many places as it likes without repeating the work.</p>
-    <pre class="code" data-lang="json"><code>{
-  "client": { "name": "ada lovelace" },
-  "items": [{ "name": "Pen", "price": 1.25 }, { "name": "Book", "price": 4.5 }],
-  "$let": {
-    "billTo": "client.name | title",
-    "total": "items | sum('price')",
-    "ref": "'INV-' ~ (counter('invoice') | pad(4))"
-  },
-  "$fn": {
-    "money(n, cur='USD')": "(n | round(2)) ~ ' ' ~ cur"
-  }
+    <p class="what">Write a value or a function once in the data file, then use it as often as you like in the template.</p>
+    <pre class="code" data-lang="json"><code>// templates/welcome.data.json
+{
+  "firstName": "Ada",
+  "lastName": "Lovelace",
+  "$let": { "fullName": "firstName ~ ' ' ~ lastName" },
+  "$fn":  { "greet(who)": "'Hello, ' ~ who" }
 }</code></pre>
-    <pre class="code" data-lang="njk"><code>{
-  "ref": {{ ref | dump }},
-  "bill_to": {{ billTo | dump }},
-  "total": {{ money(total) | dump }},
-  "total_eur": {{ money(total * 0.92, "EUR") | dump }},
-  "subject": {{ ("Invoice " ~ ref) | dump }}
+    <pre class="code" data-lang="njk"><code>{# templates/welcome.njk #}
+{
+  "to": {{ fullName | dump }},
+  "subject": {{ greet(fullName) | dump }},
+  "sign_off": {{ greet("team") | dump }}
+}</code></pre>
+    <pre class="code" data-lang="json"><code>// node render.js welcome.njk
+{
+  "to": "Ada Lovelace",
+  "subject": "Hello, Ada Lovelace",
+  "sign_off": "Hello, team"
 }</code></pre>
     <dl class="args">
-      <dt><code>"$let"</code></dt><dd>Named values. Each is an expression, what you would write inside <code>{{ }}</code>. They are worked out once per run, in the order written, so a later one can use an earlier one. They keep their type: a number stays a number, a list stays a list.</dd>
-      <dt><code>"$fn"</code></dt><dd>Named functions. The key gives the name and arguments, with <code>=</code> for a default; the value is the expression it returns. Call it like any helper, by position or by name: <code>money(4, cur="EUR")</code>. A function can use the data, every <code>$let</code> value and the other functions.</dd>
+      <dt><code>"$let"</code></dt><dd>A named value. <code>fullName</code> is built once from <code>firstName</code> and <code>lastName</code>, then used twice.</dd>
+      <dt><code>"$fn"</code></dt><dd>A named function. The key gives its name and arguments, <code>greet(who)</code>; the value is what it returns. <code>~</code> joins text.</dd>
     </dl>
     <div class="prose">
-      <p>A <code>$let</code> value that calls <code>counter()</code> still counts once per run, however many places use it. Names cannot repeat a value in the data or a helper's name, and a <code>$let</code> that gives nothing (usually a misspelt name) stops the run with the name in the message. <code>| dump</code> is only needed to put text into JSON, where it adds the quotes; numbers go in as they are. <code>jsonFromFile()</code> templates see these names too.</p>
+      <p>Both are written the way you would write inside <code>{{ }}</code>, so filters and helpers work too. An argument can have a default, as in <code>greet(who, word='Hello')</code>. A <code>$let</code> value is worked out once per run, so one that calls <code>counter()</code> gives the same number everywhere it is used. A name cannot repeat a data value or a helper, and a misspelt name stops the run and says which entry. <code>| dump</code> is only needed to put text into JSON, where it adds the quotes.</p>
     </div>
   </article>
 </section>
