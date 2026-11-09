@@ -500,16 +500,17 @@ node render.js daily.njk --dry-run           # preview the next run</code></pre>
 
   <article class="helper" id="h-shared">
     <h3 class="sig">Sharing a counter between templates: <code>"$state"</code></h3>
-    <p class="what">Two templates can count from the same number. Give the key a shared name in each data file.</p>
+    <p class="what">Two templates can count from the same number. In each data file, map the key to the name of a state file. The name is yours to choose: <code>"counters"</code> means <code>templates/counters.state.json</code>. Templates that give the key the same name share that file.</p>
     <pre class="code" data-lang="njk"><code>{# templates/a.njk and templates/b.njk, the same in both #}
 { "ticket": {{ counter("ticket") }} }</code></pre>
     <pre class="code" data-lang="json"><code>// templates/a.data.json and templates/b.data.json, the same in both
-{ "$state": { "ticket": "shared" } }</code></pre>
+{ "$state": { "ticket": "counters" } }
+//             key        state file: templates/counters.state.json</code></pre>
     <pre class="code" data-lang="sh"><code>node render.js a.njk     # { "ticket": 1 }
 node render.js b.njk     # { "ticket": 2 }   carries on from a.njk
 node render.js a.njk     # { "ticket": 3 }</code></pre>
     <div class="prose">
-      <p>The number is kept in <code>templates/shared.state.json</code>. Without the <code>"$state"</code> line, each template would count 1, 2, 3 on its own.</p>
+      <p>Both data files say <code>"counters"</code>, so both templates keep <code>ticket</code> in <code>templates/counters.state.json</code>. If <code>b.data.json</code> said <code>"other"</code> instead, b would count in <code>other.state.json</code> and nothing would be shared. Without the <code>"$state"</code> line, each template would count 1, 2, 3 in its own <code>a.state.json</code> or <code>b.state.json</code>.</p>
       <p>Only the keys you list are shared; every other key, and <code>lastRun</code>, stays in the template's own state file. <code>--hold ticket</code> works as usual, and <code>init</code> creates the shared file if it is missing.</p>
     </div>
   </article>

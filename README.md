@@ -100,11 +100,14 @@ with every value the template uses left blank. It never overwrites anything.
 
 ### Sharing a counter between templates
 
-Two templates can count from the same number. Give the key a shared name in each data file:
+Two templates can count from the same number. In each data file, map the key to the name of a
+state file. The name is yours to choose: `"counters"` means `templates/counters.state.json`, and
+templates that give the key the same name share that file.
 
 ```
 templates/a.njk and templates/b.njk         { "ticket": {{ counter("ticket") }} }
-templates/a.data.json and b.data.json       { "$state": { "ticket": "shared" } }
+templates/a.data.json and b.data.json       { "$state": { "ticket": "counters" } }
+                                                           key        state file name
 ```
 
 ```sh
@@ -113,8 +116,10 @@ node render.js b.njk     # { "ticket": 2 }   carries on from a.njk
 node render.js a.njk     # { "ticket": 3 }
 ```
 
-The number is kept in `templates/shared.state.json`. Without the `"$state"` line, each template
-would count 1, 2, 3 on its own. Only the keys you list are shared; every other key, and `lastRun`,
+Both data files say `"counters"`, so `ticket` is kept in `templates/counters.state.json`. If
+`b.data.json` said `"other"`, b would count in `other.state.json` and nothing would be shared.
+Without the `"$state"` line, each template would count 1, 2, 3 in its own `a.state.json` or
+`b.state.json`. Only the keys you list are shared; every other key, and `lastRun`,
 stays in the template's own state file. `--hold ticket` works as usual, and `init` creates the
 shared file if it is missing.
 
