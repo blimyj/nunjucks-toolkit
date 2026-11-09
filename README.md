@@ -100,28 +100,32 @@ with every value the template uses left blank. It never overwrites anything.
 
 ### Sharing a counter between templates
 
-Two templates can count from the same number. In each data file, map the key to the name of a
-state file. The name is yours to choose: `"counters"` means `templates/counters.state.json`, and
-templates that give the key the same name share that file.
+Two templates can count from the same number. In each data file, map the counter's key to the
+name of a state file. You choose the name: `"shop"` means `templates/shop.state.json`, and
+templates that use the same name share that file.
 
 ```
-templates/a.njk and templates/b.njk         { "ticket": {{ counter("ticket") }} }
-templates/a.data.json and b.data.json       { "$state": { "ticket": "counters" } }
-                                                           key        state file name
+templates/email.njk                       { "email_ref": {{ counter("orderNumber") }} }
+templates/sms.njk                         { "sms_ref": {{ counter("orderNumber") }} }
+
+templates/email.data.json and             { "$state": { "orderNumber": "shop" } }
+templates/sms.data.json                                  counter key    state file name
 ```
 
 ```sh
-node render.js a.njk     # { "ticket": 1 }
-node render.js b.njk     # { "ticket": 2 }   carries on from a.njk
-node render.js a.njk     # { "ticket": 3 }
+node render.js email.njk     # { "email_ref": 1 }
+node render.js sms.njk       # { "sms_ref": 2 }     carries on from email.njk
+node render.js email.njk     # { "email_ref": 3 }
 ```
 
-Both data files say `"counters"`, so `ticket` is kept in `templates/counters.state.json`. If
-`b.data.json` said `"other"`, b would count in `other.state.json` and nothing would be shared.
-Without the `"$state"` line, each template would count 1, 2, 3 in its own `a.state.json` or
-`b.state.json`. Only the keys you list are shared; every other key, and `lastRun`,
-stays in the template's own state file. `--hold ticket` works as usual, and `init` creates the
-shared file if it is missing.
+Both data files send `orderNumber` to `"shop"`, so both templates count in
+`templates/shop.state.json`, which now holds `{ "orderNumber": 3 }`. If `sms.data.json` said
+`"texts"` instead, sms.njk would count in `texts.state.json` and nothing would be shared. Without
+the `"$state"` line, each template would count 1, 2, 3 in its own `email.state.json` or
+`sms.state.json`.
+
+Only the keys you list are shared; every other key, and `lastRun`, stays in the template's own
+state file. `--hold orderNumber` works as usual, and `init` creates the shared file if it is missing.
 
 ### Values and functions in the data file
 
