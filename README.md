@@ -58,7 +58,7 @@ const HEADERS = { 'Content-Type': 'application/json' };
 
 const PATHS = {
   'invoice.njk': '/invoices',
-  'order.njk': '/orders'        // add a line for each template you send
+  'order.njk': '/orders'        // optional: without a line, order.njk goes to BASE_URL itself
 };
 ```
 
@@ -143,8 +143,8 @@ Node 18 and later. If the request fails (no 2xx reply, no connection, or no repl
 30 seconds), the state file is put back as it was, so a failed send does not use up a counter
 or rotation step. It takes the same flags as `render.js`.
 
-Where requests go is set at the top of `send.js` (see step 4 above). `BASE_URL` and `METHOD`
-can also be set for a single run:
+Where requests go is set at the top of `send.js` (see step 4 above). A template with no entry in
+`PATHS` is sent to `BASE_URL` as it is. `BASE_URL` and `METHOD` can also be set for a single run:
 
 ```sh
 node send.js invoice.njk                              # POST to http://localhost:3000/invoices
@@ -163,6 +163,7 @@ From your own code:
 const { send } = require('./send');
 const { reply } = await send('invoice.njk', { hold: ['invoice'] });
 await send('invoice.njk', {}, { method: 'PUT', baseUrl: 'https://api.example.com' });
+await send('daily.njk', {}, { path: '/days' });   // a path for this call only
 ```
 
 `send()` returns `{ sentAt, copy, reply }`, where `reply` is `{ status, statusText, text }`.
