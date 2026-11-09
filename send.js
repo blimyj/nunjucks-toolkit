@@ -1,6 +1,6 @@
 // send.js: render a template, then send the result to a URL with fetch (built into Node 18+).
-// The state file only keeps this run if the request succeeds (a 2xx reply); otherwise it is put
-// back as it was, so a failed send does not use up an invoice number or a rotation step.
+// The state files only keep this run if the request succeeds (a 2xx reply); otherwise they are put
+// back as they were, so a failed send does not use up an invoice number or a rotation step.
 // A copy of every payload is kept, named by the local time it was sent:
 // sent/<name>.<time>.json, or <name>.<time>.failed.json when the request failed.
 //
@@ -10,7 +10,7 @@
 //   METHOD=PUT BASE_URL=https://api.example.com node send.js invoice.njk
 const fs = require('fs');
 const path = require('path');
-const { render, parseArgs } = require('./render');
+const { render, parseArgs, stateFilesFor } = require('./render');
 
 // Where requests go. BASE_URL and METHOD in the environment override these for one run.
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
@@ -24,7 +24,6 @@ const PATHS = {
   'invoice.njk': '/invoices'
 };
 
-const TEMPLATES = path.join(__dirname, 'templates');
 const SENT = path.join(__dirname, 'sent');
 
 // This computer's local time, such as 2026-10-27T21:53:08
@@ -46,10 +45,10 @@ async function send(templateName, opts = {}, { baseUrl = BASE_URL, path: urlPath
   if (!/^[A-Z]+$/.test(method)) throw new Error(`Not a request method: ${method}`);
   const url = urlPath ? baseUrl.replace(/\/+$/, '') + '/' + urlPath.replace(/^\/+/, '') : baseUrl;
   const name = templateName.replace(/\.[^./]+$/, '');
-  const state = path.join(TEMPLATES, name + '.state.json');
 
   const hasBody = method !== 'GET' && method !== 'HEAD';
-  const saved = fs.existsSync(state) ? fs.readFileSync(state, 'utf8') : null; // the state file before this run
+  const saved = new Map();                    // each state file before this run (null: did not exist)
+  if (hasBody) for (const file of stateFilesFor(templateName)) saved.set(file, fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null);
   const body = hasBody ? render(templateName, {}, opts) : undefined;
   const sentAt = localTime();
 
@@ -83,10 +82,13 @@ async function send(templateName, opts = {}, { baseUrl = BASE_URL, path: urlPath
   fs.writeFileSync(copy, body);
 
   if (problem) {
-    if (saved === null) fs.rmSync(state, { force: true });
-    else fs.writeFileSync(state, saved);
+    for (const [file, text] of saved) {
+      if (text === null) fs.rmSync(file, { force: true });
+      else fs.writeFileSync(file, text);
+    }
+    const names = [...saved.keys()].map((f) => 'templates/' + path.basename(f)).join(', ');
     const err = new Error(`${method} ${url} at ${sentAt} failed: ${problem}.\n` +
-      `templates/${name}.state.json is back to how it was before this run. ` +
+      `${names} ${saved.size > 1 ? 'are' : 'is'} back to how ${saved.size > 1 ? 'they were' : 'it was'} before this run. ` +
       `Payload kept in ${path.relative(__dirname, copy)}`);
     err.reply = reply;
     throw err;

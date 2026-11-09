@@ -8,6 +8,8 @@ const { addDateHelpers, addSetHelpers, addJsonHelpers } = require('./helpers');
 //   invoice.njk          the template
 //   invoice.data.json    your values; you edit this file
 //   invoice.state.json   counters and other run-to-run values; render.js writes this file
+// A data file can send a key to a shared state file, so templates share it:
+//   "$state": { "invoice": "billing" }    saved in billing.state.json
 // `node render.js init invoice.njk` creates both companions.
 // `node render.js invoice.njk --hold topic` renders without moving "topic" on, and
 // `--reverse topic` steps it back one run (see the CLI at the end).
@@ -26,6 +28,57 @@ function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8')); // broken JSON stops the run instead of losing data
 }
 
+// Keys starting with $ in a data file are settings for render.js, not values for the template.
+const SETTINGS = ['$state'];
+function splitData(data, dataFile) {
+  const settings = {};
+  const vars = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (!key.startsWith('$')) vars[key] = value;
+    else if (SETTINGS.includes(key)) settings[key] = value;
+    else throw new Error(`${path.basename(dataFile)}: unknown setting "${key}". Settings are: ${SETTINGS.join(', ')}`);
+  }
+  return { settings, vars };
+}
+
+// Which state file each key is saved in. A key is saved in the template's own state file
+// unless the data file sends it to a shared one by name:
+//   "$state": { "invoice": "billing" }    counter("invoice") is kept in billing.state.json
+// Every template that sends "invoice" to "billing" uses the same number.
+function stateRouting(templateName, settings, dataFile) {
+  const own = companions(templateName).state;
+  const shared = settings.$state ?? {};
+  const where = path.basename(dataFile) + ': "$state"';
+  if (typeof shared !== 'object' || shared === null || Array.isArray(shared)) {
+    throw new Error(`${where} should map keys to state names, such as { "invoice": "billing" }`);
+  }
+  const byKey = {};
+  for (const [key, name] of Object.entries(shared)) {
+    if (key === 'lastRun') throw new Error(`${where}: lastRun always stays in the template's own state file`);
+    if (typeof name !== 'string' || !/^[\w-][\w.-]*$/.test(name) || /\.json$/i.test(name)) {
+      throw new Error(`${where}: "${key}" should name a state, such as "billing" for billing.state.json`);
+    }
+    byKey[key] = path.join(TEMPLATES, name + '.state.json');
+  }
+  return { own, fileOf: (key) => byKey[key] ?? own, files: [...new Set([own, ...Object.values(byKey)])] };
+}
+
+// Every state file a run of this template can change. send.js copies them before sending.
+function stateFilesFor(templateName) {
+  const files = companions(templateName);
+  if (!fs.existsSync(files.data)) return [files.state];
+  return stateRouting(templateName, splitData(readJson(files.data), files.data).settings, files.data).files;
+}
+
+// One object that reads and writes each key in the state file it belongs to.
+function routedState(stores, fileOf) {
+  return new Proxy({}, {
+    get: (_, key) => stores[fileOf(key)][key],
+    set: (_, key, value) => { stores[fileOf(key)][key] = value; return true; },
+    has: (_, key) => key in stores[fileOf(key)]
+  });
+}
+
 function writeJson(file, value) {
   const tmp = file + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(value, null, 2) + '\n');
@@ -40,8 +93,8 @@ addDateHelpers(env); // now(), datetime(), | date, | dateAdd, daysBetween()
 addSetHelpers(env);  // | array, | unique, toSet()
 addJsonHelpers(env); // when(), json(), | json
 
-let state = {};    // the state file; changed during the render, saved after it
-let before = {};   // the state file as it was when this run started
+let state = {};    // the state files, by key; changed during the render, saved after it
+let before = {};   // the state files as they were when this run started
 let thisRun = {};  // values already handed out during this run
 let afterRun = {}; // reset() and remember() changes, applied once the render succeeds
 let options = {};  // this run's --hold, --only and --reverse lists
@@ -222,9 +275,12 @@ function render(templateName, extra = {}, opts = {}) {
   if (!fs.existsSync(files.data)) {
     throw new Error(`${path.basename(files.data)} is missing. Create it with: node render.js init ${templateName}`);
   }
-  const data = readJson(files.data);
-  state = fs.existsSync(files.state) ? readJson(files.state) : {};
-  before = JSON.parse(JSON.stringify(state));
+  const { settings, vars: data } = splitData(readJson(files.data), files.data);
+  const routing = stateRouting(templateName, settings, files.data);
+  const stores = {};
+  for (const file of routing.files) stores[file] = fs.existsSync(file) ? readJson(file) : {};
+  state = routedState(stores, routing.fileOf);
+  before = routedState(JSON.parse(JSON.stringify(stores)), routing.fileOf);
   thisRun = {};
   afterRun = {};
   const both = (opts.hold || []).filter((k) => (opts.reverse || []).includes(k));
@@ -239,7 +295,7 @@ function render(templateName, extra = {}, opts = {}) {
   Object.assign(state, afterRun);
   if (!(opts.hold || []).includes('lastRun')) state.lastRun = new Date();
   if (opts.report) opts.report(summary(before, state, opts));
-  if (!opts.dryRun) writeJson(files.state, state); // only reached when rendering worked
+  if (!opts.dryRun) for (const file of routing.files) writeJson(file, stores[file]); // only reached when rendering worked
   return output;
 }
 
@@ -452,6 +508,10 @@ function init(templateName) {
     writeJson(files.state, {});
     report.createdState = true;
   }
+  report.createdShared = [];                  // shared state files named in "$state"
+  for (const file of stateFilesFor(templateName)) {
+    if (file !== files.state && !fs.existsSync(file)) { writeJson(file, {}); report.createdShared.push(path.basename(file)); }
+  }
   return report;
 }
 
@@ -459,7 +519,8 @@ function describe(r) {
   const keys = r.addedKeys.length ? r.addedKeys.join(', ') : 'none';
   return [
     r.createdData ? `Created ${r.data} with keys: ${keys}` : (r.addedKeys.length ? `Added to ${r.data}: ${keys}` : `${r.data} already has every key`),
-    r.createdState ? `Created ${r.state}` : `${r.state} already exists`
+    r.createdState ? `Created ${r.state}` : `${r.state} already exists`,
+    ...(r.createdShared || []).map((name) => `Created ${name}`)
   ].join('\n');
 }
 
@@ -496,7 +557,7 @@ Options for rendering:
 Keys are the names given to counter(), rotate(), firstTime(), reset() and remember().
 Separate several with commas: --hold invoice,topic. --hold lastRun keeps lastRun too.`;
 
-module.exports = { render, init, inferData, describe, parseArgs };
+module.exports = { render, init, inferData, describe, parseArgs, stateFilesFor };
 
 if (require.main === module) {
   try {

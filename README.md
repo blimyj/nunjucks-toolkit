@@ -98,6 +98,24 @@ Each template has two companion files next to it:
 `node render.js init letter.njk` creates the data and state files for a new template,
 with every value the template uses left blank. It never overwrites anything.
 
+### Sharing a key between templates
+
+A key is saved in the template's own state file unless its data file sends it to a shared
+state file by name:
+
+```json
+{
+  "$state": { "invoice": "billing" },
+  "client": { "name": "Ada Lovelace" }
+}
+```
+
+Put the same line in `invoice.data.json` and `receipt.data.json`, and `counter("invoice")` in
+both templates draws from one sequence kept in `templates/billing.state.json`. Their other keys
+stay in their own state files, and so does `lastRun`. Keys starting with `$` are settings, so the
+template does not see them. `--hold invoice` works as before, `init` creates a missing shared
+state file, and a failed `send.js` puts back every state file the run changed.
+
 ## Running
 
 ```sh
